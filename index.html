@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Liberis Integration Configurator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Fraunces:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#0b0c0f;--bg2:#111318;--bg3:#181a22;--card:#1c1f2a;
+  --border:#252a3a;--border2:#303650;
+  --accent:#e8ff6e;--accent2:#7ee8b2;
+  --text:#dde2f0;--text2:#8892b0;--text3:#495270;
+  --blue:#7eb8f7;--purple:#b39ddb;--amber:#ffd166;--teal:#5eead4;--coral:#ff8a80;
+  --fh:'Fraunces',serif;--fb:'DM Sans',sans-serif;--fm:'IBM Plex Mono',monospace;
+  --r:8px;--r2:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;line-height:1.6;min-height:100vh;}
+.shell{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:256px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.logo{padding:24px 20px 18px;border-bottom:1px solid var(--border);}
+.logo .w1{font-family:var(--fh);font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-.03em;}
+.logo .w2{font-size:11px;color:var(--text3);font-family:var(--fm);margin-top:2px;}
+.step-nav{padding:14px 10px;flex:1;}
+.sn{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;margin-bottom:1px;transition:background .15s;position:relative;}
+.sn:hover{background:var(--bg3);}
+.sn.active{background:rgba(232,255,110,.07);}
+.sn.done .dot{background:var(--teal);border-color:var(--teal);color:#0b0c0f;font-weight:700;}
+.dot{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-family:var(--fm);font-size:10px;color:var(--text3);transition:all .2s;}
+.sn.active .dot{border-color:var(--accent);background:var(--accent);color:#0b0c0f;font-weight:700;}
+.si .sl{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text2);}
+.sn.active .sl{color:var(--accent);}
+.si .sd{font-size:11px;color:var(--text3);margin-top:1px;}
+.sn:not(:last-child)::before{content:'';position:absolute;left:20px;top:33px;width:1px;height:16px;background:var(--border);}
+
+/* PROGRESS */
+.prog{height:2px;background:var(--border);position:fixed;top:0;left:0;right:0;z-index:100;}
+.prog-fill{height:100%;background:var(--accent);transition:width .4s ease;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;}
+.view{display:none;padding:44px 52px;max-width:860px;}
+.view.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.fu{animation:fadeUp .3s ease both;}
+
+/* TYPOGRAPHY */
+.ey{font-family:var(--fm);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+.vt{font-family:var(--fh);font-size:26px;font-weight:900;color:var(--text);letter-spacing:-.03em;line-height:1.2;}
+.vd{font-size:13.5px;color:var(--text2);margin-top:8px;max-width:620px;line-height:1.75;}
+.vh{margin-bottom:28px;}
+.slabel{font-family:var(--fm);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px;margin-top:4px;}
+.divider{height:1px;background:var(--border);margin:24px 0;}
+
+/* FORM */
+.f{margin-bottom:16px;}
+.f label{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px;font-family:var(--fm);}
+.f input,.f select,.f textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:9px 12px;font-size:13px;font-family:var(--fb);outline:none;transition:border-color .15s;resize:vertical;}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--accent);}
+.f textarea{min-height:80px;}
+.f select option{background:var(--bg3);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* TOGGLE */
+.tw{display:flex;align-items:center;gap:8px;cursor:pointer;margin-right:4px;}
+.tg{position:relative;width:36px;height:20px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:10px;transition:all .2s;flex-shrink:0;}
+.tg::after{content:'';position:absolute;left:2px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--text3);transition:all .2s;}
+input[type=checkbox]{display:none;}
+input[type=checkbox]:checked+.tg{background:rgba(232,255,110,.18);border-color:var(--accent);}
+input[type=checkbox]:checked+.tg::after{left:calc(100% - 15px);background:var(--accent);}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-bottom:14px;transition:border-color .15s;}
+.card.sel{border-color:var(--accent);background:rgba(232,255,110,.03);}
+.ct{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--text);}
+.cd{font-size:12.5px;color:var(--text2);margin-top:5px;line-height:1.6;}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-family:var(--fm);font-size:10px;font-weight:500;letter-spacing:.04em;}
+.tg-api{background:rgba(255,209,102,.1);color:var(--amber);border:1px solid rgba(255,209,102,.2);}
+.tg-mock{background:rgba(255,138,128,.1);color:var(--coral);border:1px solid rgba(255,138,128,.2);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:var(--r);font-size:12.5px;font-weight:600;font-family:var(--fh);cursor:pointer;transition:all .15s;border:none;}
+.btn-p{background:var(--accent);color:#0b0c0f;}
+.btn-p:hover{background:#f0ff85;transform:translateY(-1px);}
+.btn-s{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-s:hover{border-color:var(--accent);color:var(--accent);}
+.btn-t{background:rgba(126,184,247,.1);color:var(--blue);border:1px solid rgba(126,184,247,.2);}
+.btn-t:hover{background:rgba(126,184,247,.18);}
+.btn-teal{background:rgba(94,234,212,.1);color:var(--teal);border:1px solid rgba(94,234,212,.2);}
+.brow{display:flex;align-items:center;gap:10px;margin-top:24px;flex-wrap:wrap;}
+
+/* INFO BLOCKS */
+.ib{background:rgba(232,255,110,.04);border:1px solid rgba(232,255,110,.15);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text2);margin-bottom:16px;line-height:1.65;}
+.wb{background:rgba(255,138,128,.04);border:1px solid rgba(255,138,128,.15);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text2);margin-bottom:16px;line-height:1.65;}
+.sb{background:rgba(94,234,212,.04);border:1px solid rgba(94,234,212,.15);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text2);margin-bottom:16px;line-height:1.65;}
+
+/* SCHEMA UPLOAD */
+.dropzone{border:2px dashed var(--border2);border-radius:var(--r2);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:rgba(232,255,110,.03);}
+.dropzone .icon{font-size:28px;margin-bottom:8px;}
+.dropzone .dt{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--text2);margin-bottom:4px;}
+.dropzone .ds{font-size:12px;color:var(--text3);}
+.schema-preview{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-top:12px;max-height:160px;overflow-y:auto;font-family:var(--fm);font-size:11px;color:var(--teal);line-height:1.6;}
+.schema-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(94,234,212,.1);border:1px solid rgba(94,234,212,.2);color:var(--teal);padding:5px 12px;border-radius:5px;font-family:var(--fm);font-size:11px;margin-top:8px;}
+
+/* OUTPUT TABS */
+.otabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);}
+.otab{padding:8px 14px;font-size:11px;font-family:var(--fm);color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.otab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.otab:hover{color:var(--text);}
+.tpanel{display:none;}
+.tpanel.active{display:block;}
+
+/* ACCORDION */
+.acc{margin-bottom:10px;}
+.ach{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;user-select:none;}
+.ach:hover{border-color:var(--border2);}
+.acc.open .ach{border-radius:var(--r) var(--r) 0 0;border-color:var(--accent);border-bottom:none;}
+.at{font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.ac{color:var(--text3);transition:transform .2s;font-size:11px;}
+.acc.open .ac{transform:rotate(180deg);color:var(--accent);}
+.acb{display:none;background:var(--bg2);border:1px solid var(--accent);border-top:none;border-radius:0 0 var(--r) var(--r);padding:18px;}
+.acc.open .acb{display:block;}
+
+/* NL FLOW */
+.nlf{color:var(--text2);font-size:13.5px;line-height:1.8;}
+.nlf h3{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--accent);margin-bottom:7px;margin-top:16px;}
+.nlf h3:first-child{margin-top:0;}
+.nlf p{margin-bottom:9px;}
+.ap{color:var(--blue);font-weight:600;}
+.am{color:var(--purple);font-weight:600;}
+.al{color:var(--accent);font-weight:600;}
+.aa{color:var(--teal);font-weight:600;}
+code{font-family:var(--fm);font-size:11px;color:var(--amber);background:rgba(255,209,102,.08);padding:1px 5px;border-radius:3px;}
+
+/* TECH TABLE */
+.ft{width:100%;border-collapse:collapse;font-size:12px;}
+.ft th{text-align:left;padding:7px 12px;font-family:var(--fm);font-size:9.5px;color:var(--text3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em;background:var(--bg2);}
+.ft td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+.ft tr:hover td{background:rgba(255,255,255,.015);}
+.mpost{color:var(--amber);font-family:var(--fm);font-size:11px;}
+.mget{color:var(--teal);font-family:var(--fm);font-size:11px;}
+.ep{color:var(--accent);font-family:var(--fm);font-size:11px;}
+.hb{display:inline-flex;padding:2px 6px;border-radius:4px;font-size:10px;font-family:var(--fm);}
+.hb-p{background:rgba(126,184,247,.1);color:var(--blue);}
+.hb-m{background:rgba(179,157,219,.1);color:var(--purple);}
+.hb-l{background:rgba(232,255,110,.1);color:var(--accent);}
+.hb-a{background:rgba(94,234,212,.1);color:var(--teal);}
+
+/* FILE DOWNLOAD CARDS */
+.file-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.file-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px;display:flex;flex-direction:column;gap:8px;}
+.file-card:hover{border-color:var(--border2);}
+.fc-name{font-family:var(--fm);font-size:12px;color:var(--amber);}
+.fc-desc{font-size:12px;color:var(--text2);line-height:1.5;}
+.fc-pills{display:flex;flex-wrap:wrap;gap:5px;}
+.fc-pill{font-family:var(--fm);font-size:10px;padding:2px 7px;border-radius:4px;}
+.pill-ts{background:rgba(126,184,247,.1);color:var(--blue);border:1px solid rgba(126,184,247,.2);}
+.pill-py{background:rgba(94,234,212,.1);color:var(--teal);border:1px solid rgba(94,234,212,.2);}
+.pill-html{background:rgba(255,209,102,.1);color:var(--amber);border:1px solid rgba(255,209,102,.2);}
+.pill-md{background:rgba(179,157,219,.1);color:var(--purple);border:1px solid rgba(179,157,219,.2);}
+
+/* CONFIG SUMMARY TABLE */
+.cfg-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;}
+.cfg-tbl td:first-child{font-family:var(--fm);font-size:11px;color:var(--text3);width:200px;padding:8px 12px;}
+.cfg-tbl td:last-child{color:var(--text);padding:8px 12px;}
+
+/* SCROLLTOP */
+.sctop{position:fixed;bottom:24px;right:24px;width:34px;height:34px;background:var(--card);border:1px solid var(--border2);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:14px;opacity:0;transition:all .15s;}
+.sctop:hover{border-color:var(--accent);color:var(--accent);}
+.sctop.vis{opacity:1;}
+
+@media(max-width:768px){.sidebar{display:none;}.view{padding:24px 18px;}.g2{grid-template-columns:1fr;}.file-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="prog"><div class="prog-fill" id="pf" style="width:16%"></div></div>
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="w1">LIBERIS</div>
+    <div class="w2">Integration Configurator</div>
+  </div>
+  <div class="step-nav">
+    <div class="sn active" onclick="goTo(1)" id="nav-1"><div class="dot">1</div><div class="si"><div class="sl">Platform Profile</div><div class="sd">Region, type, env</div></div></div>
+    <div class="sn" onclick="goTo(2)" id="nav-2"><div class="dot">2</div><div class="si"><div class="sl">Partner API Schema</div><div class="sd">Upload OpenAPI (optional)</div></div></div>
+    <div class="sn" onclick="goTo(3)" id="nav-3"><div class="dot">3</div><div class="si"><div class="sl">Onboarding Flow</div><div class="sd">Trigger, journey, prepop</div></div></div>
+    <div class="sn" onclick="goTo(4)" id="nav-4"><div class="dot">4</div><div class="si"><div class="sl">Products &amp; Rules</div><div class="sd">Offerings, eligibility</div></div></div>
+    <div class="sn" onclick="goTo(5)" id="nav-5"><div class="dot">5</div><div class="si"><div class="sl">Integration Playbook</div><div class="sd">Flows + Files</div></div></div>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main" id="ms">
+
+<!-- ══════════════════════════════════════════
+     STEP 1: PLATFORM PROFILE
+══════════════════════════════════════════ -->
+<div class="view active" id="view-1">
+  <div class="vh">
+    <div class="ey">Step 01 / Platform Profile</div>
+    <div class="vt">Tell us about your platform</div>
+    <div class="vd">Region determines the Liberis API base URL and available products. Platform type shapes how merchant data is mapped to Liberis fields.</div>
+  </div>
+
+  <div class="g2">
+    <div class="f"><label>Platform Name</label><input id="pName" placeholder="e.g. SellerHub, Vagaro, eBay"/></div>
+    <div class="f"><label>Platform Type</label>
+      <select id="pType">
+        <option value="ecommerce">E-commerce Marketplace</option>
+        <option value="booking">Booking / Appointment Platform</option>
+        <option value="pos">Point-of-Sale / Payments</option>
+        <option value="saas">SaaS / Business Software</option>
+        <option value="banking">Banking / Fintech</option>
+      </select>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Primary Region</label>
+      <select id="pRegion" onchange="updateBaseUrl()">
+        <option value="uk">United Kingdom 🇬🇧</option>
+        <option value="us">United States 🇺🇸</option>
+        <option value="eu">Europe 🇪🇺</option>
+      </select>
+    </div>
+    <div class="f"><label>API Base URL (auto-set by region)</label>
+      <input id="pBaseUrl" value="https://platform.eu.liberis.com" readonly style="opacity:.7;cursor:default;"/>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Environment</label>
+      <select id="pEnv">
+        <option value="sandbox">Sandbox (credentials pending)</option>
+        <option value="production">Production</option>
+      </select>
+    </div>
+    <div class="f"><label>Default Currency</label>
+      <select id="pCur">
+        <option value="GBP">GBP — British Pound</option>
+        <option value="USD">USD — US Dollar</option>
+        <option value="EUR">EUR — Euro</option>
+      </select>
+    </div>
+  </div>
+  <div class="f"><label>Revenue data available on your platform</label>
+    <select id="pRev">
+      <option value="card">Card terminal / acquirer data (payment_channels + monthly_volumes)</option>
+      <option value="openbanking">Open banking / bank statement (monthly_revenues)</option>
+      <option value="mixed">Mixed — both sources</option>
+    </select>
+  </div>
+
+  <div class="brow"><button class="btn btn-p" onclick="goTo(2)">Continue →</button></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STEP 2: PARTNER API SCHEMA
+══════════════════════════════════════════ -->
+<div class="view" id="view-2">
+  <div class="vh">
+    <div class="ey">Step 02 / Partner API Schema</div>
+    <div class="vt">Your platform's OpenAPI schema</div>
+    <div class="vd">Optional. Upload your OpenAPI/Swagger spec and the MOCK stub comments in the generated files will reference your actual endpoint paths and operation IDs instead of generic placeholders.</div>
+  </div>
+
+  <div class="ib">💡 Without a schema, all partner-side functions are generated as <span class="tag tg-mock">MOCK</span> stubs with clear contracts. You can replace them with real calls at any time.</div>
+
+  <div class="dropzone" id="dropZone"
+       onclick="document.getElementById('schemaFile').click()"
+       ondragover="doDragOver(event)" ondrop="doDrop(event)" ondragleave="doLeave()">
+    <div class="icon">📄</div>
+    <div class="dt">Drop your OpenAPI file here</div>
+    <div class="ds">JSON or YAML · openapi.json / swagger.yaml</div>
+  </div>
+  <input type="file" id="schemaFile" accept=".json,.yaml,.yml" style="display:none" onchange="loadSchemaFile(this)"/>
+
+  <div style="margin-top:14px;">
+    <div class="f"><label>Or paste your schema JSON/YAML here</label>
+      <textarea id="schemaPaste" placeholder='{"openapi":"3.0.0","info":{"title":"MyPlatform API"},"paths":{...}}' style="min-height:100px;font-family:var(--fm);font-size:11px;"></textarea>
+    </div>
+  </div>
+
+  <div id="schemaResult" style="display:none"></div>
+
+  <div class="brow">
+    <button class="btn btn-s" onclick="goTo(1)">← Back</button>
+    <button class="btn btn-p" onclick="parseSchemaAndContinue()">Parse &amp; Continue →</button>
+    <button class="btn btn-t" onclick="skipSchema()">Skip — use mocks</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STEP 3: ONBOARDING FLOW
+══════════════════════════════════════════ -->
+<div class="view" id="view-3">
+  <div class="vh">
+    <div class="ey">Step 03 / Onboarding Flow</div>
+    <div class="vt">How merchants discover financing</div>
+    <div class="vd">Configure when and how financing is surfaced. Pre-population settings determine which fields your integration can skip collecting from the merchant.</div>
+  </div>
+
+  <div class="f"><label>Financing surfaces to merchant when…</label>
+    <select id="oTrigger">
+      <option value="dashboard">Always visible in merchant dashboard</option>
+      <option value="threshold">After a revenue threshold is crossed</option>
+      <option value="campaign">Via a targeted partner campaign / invite list</option>
+      <option value="organic">Merchant navigates to it from a menu</option>
+    </select>
+  </div>
+  <div class="f"><label>Merchant journey type</label>
+    <select id="oJourney">
+      <option value="embedded">Fully embedded (your UI, your flow)</option>
+      <option value="redirect">Redirect to Liberis-hosted journey</option>
+      <option value="iframe">Liberis Click2Sign iFrame in your dashboard</option>
+    </select>
+  </div>
+  <div class="f"><label>Describe your onboarding in plain English (optional)</label>
+    <textarea id="oNL" placeholder="e.g. Show a 'Grow Your Business' banner after a merchant hits £5k in 3 months. Clicking it pre-fills their profile and shows personalised offers inline without leaving the platform."></textarea>
+  </div>
+
+  <div class="slabel">Data your platform already holds (will be pre-populated)</div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px;">
+    <label class="tw"><input type="checkbox" id="pp_name" checked><span class="tg"></span><span style="font-size:12px;color:var(--text2)">Legal name</span></label>
+    <label class="tw"><input type="checkbox" id="pp_addr" checked><span class="tg"></span><span style="font-size:12px;color:var(--text2)">Address</span></label>
+    <label class="tw"><input type="checkbox" id="pp_rev" checked><span class="tg"></span><span style="font-size:12px;color:var(--text2)">Revenue history</span></label>
+    <label class="tw"><input type="checkbox" id="pp_email"><span class="tg"></span><span style="font-size:12px;color:var(--text2)">Email</span></label>
+    <label class="tw"><input type="checkbox" id="pp_phone"><span class="tg"></span><span style="font-size:12px;color:var(--text2)">Phone</span></label>
+    <label class="tw"><input type="checkbox" id="pp_dob"><span class="tg"></span><span style="font-size:12px;color:var(--text2)">Date of birth</span></label>
+    <label class="tw"><input type="checkbox" id="pp_reg"><span class="tg"></span><span style="font-size:12px;color:var(--text2)">Company reg no.</span></label>
+  </div>
+
+  <div class="brow"><button class="btn btn-s" onclick="goTo(2)">← Back</button><button class="btn btn-p" onclick="goTo(4)">Continue →</button></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STEP 4: PRODUCTS & RULES
+══════════════════════════════════════════ -->
+<div class="view" id="view-4">
+  <div class="vh">
+    <div class="ey">Step 04 / Products &amp; Rules</div>
+    <div class="vt">What to offer and who qualifies</div>
+    <div class="vd">Enable products and configure eligibility. Your platform-level rules layer on top of Liberis underwriting — you can restrict access but cannot override Liberis credit decisions.</div>
+  </div>
+
+  <div class="slabel">Products</div>
+
+  <div class="card sel" id="c-bca">
+    <div class="ch">
+      <div><span class="tag tg-api">BCA</span><div class="ct" style="margin-top:5px">Business Cash Advance</div><div class="cd">Revenue-based advance repaid as a % of daily card takings. No fixed term — repayment flexes with revenue.</div></div>
+      <label class="tw"><input type="checkbox" id="en_bca" checked onchange="toggleCard('bca',this.checked)"><span class="tg"></span></label>
+    </div>
+    <div id="bca-cfg" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <div class="g2">
+        <div class="f"><label>Min advance</label><input type="number" id="bcaMin" value="5000" min="1000"/></div>
+        <div class="f"><label>Max advance</label><input type="number" id="bcaMax" value="150000" min="1000"/></div>
+      </div>
+      <div class="f"><label>Offer display mode</label>
+        <select id="bcaPresets">
+          <option value="true">3 curated presets (apply_offer_presets: true)</option>
+          <option value="false">Full range (apply_offer_presets: false)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="c-flexi">
+    <div class="ch">
+      <div><span class="tag tg-api">FLEXI</span><div class="ct" style="margin-top:5px">Flexi Loan</div><div class="cd">Fixed-schedule term loan. Predictable repayments for merchants who prefer certainty over flexibility.</div></div>
+      <label class="tw"><input type="checkbox" id="en_flexi" onchange="toggleCard('flexi',this.checked)"><span class="tg"></span></label>
+    </div>
+    <div id="flexi-cfg" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <div class="g2">
+        <div class="f"><label>Min loan</label><input type="number" value="3000" min="1000"/></div>
+        <div class="f"><label>Max loan</label><input type="number" value="100000" min="1000"/></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="c-renewal">
+    <div class="ch">
+      <div><span class="tag tg-api">RENEWAL</span><div class="ct" style="margin-top:5px">Renewals / Top-ups</div><div class="cd">Re-offer eligible returning merchants using <code>liberis_id</code> from their original deal. Skips re-registration.</div></div>
+      <label class="tw"><input type="checkbox" id="en_renewal" checked onchange="toggleCard('renewal',this.checked)"><span class="tg"></span></label>
+    </div>
+    <div id="renewal-cfg" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <div class="f"><label>Trigger renewal offer when</label>
+        <select id="renewalTrigger">
+          <option value="75">75% of advance repaid</option>
+          <option value="50">50% of advance repaid</option>
+          <option value="closed">Deal fully closed</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="slabel">Eligibility &amp; Repayment</div>
+
+  <div class="g2">
+    <div class="f"><label>Min months on your platform</label><input type="number" id="minMonths" value="3" min="0"/></div>
+    <div class="f"><label>Min average monthly revenue</label><input type="number" id="minRev" value="2000" min="0"/></div>
+  </div>
+
+  <div class="f"><label>Repayment mechanism</label>
+    <select id="repMech">
+      <option value="terminal_split">Terminal split — acquirer handles at POS</option>
+      <option value="esplit">Partner e-split — your platform remits via Settlement API</option>
+    </select>
+  </div>
+
+  <div class="divider"></div>
+  <div class="slabel">Whitelist / Blocklist</div>
+  <div class="g2">
+    <div class="card" style="margin-bottom:0">
+      <div class="ch">
+        <div><div class="ct" style="font-size:13px">Merchant Whitelist</div><div class="cd">Specific merchant IDs always shown financing regardless of eligibility rules.</div></div>
+        <label class="tw"><input type="checkbox" id="en_wl" onchange="document.getElementById('wl-area').style.display=this.checked?'block':'none'"><span class="tg"></span></label>
+      </div>
+      <div id="wl-area" style="display:none;margin-top:10px"><div class="f" style="margin-bottom:0"><label>Merchant IDs (comma-separated)</label><textarea placeholder="MERCH_001, MERCH_002" style="min-height:56px;"></textarea></div></div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="ch">
+        <div><div class="ct" style="font-size:13px">Merchant Blocklist</div><div class="cd">Specific merchant IDs explicitly excluded from all financing.</div></div>
+        <label class="tw"><input type="checkbox" id="en_bl" onchange="document.getElementById('bl-area').style.display=this.checked?'block':'none'"><span class="tg"></span></label>
+      </div>
+      <div id="bl-area" style="display:none;margin-top:10px"><div class="f" style="margin-bottom:0"><label>Merchant IDs (comma-separated)</label><textarea placeholder="MERCH_BAD_1" style="min-height:56px;"></textarea></div></div>
+    </div>
+  </div>
+
+  <div class="brow"><button class="btn btn-s" onclick="goTo(3)">← Back</button><button class="btn btn-p" onclick="goTo(5)">Generate Playbook →</button></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STEP 5: INTEGRATION PLAYBOOK
+══════════════════════════════════════════ -->
+<div class="view" id="view-5">
+  <div class="vh">
+    <div class="ey">Step 05 / Integration Playbook</div>
+    <div class="vt" id="outTitle">Integration Playbook</div>
+    <div class="vd" id="outDesc">End-to-end flows and download links for your integration files.</div>
+  </div>
+
+  <div id="outContent">
+    <div class="otabs">
+      <div class="otab active" onclick="oTab('flows',0)">NL Flows</div>
+      <div class="otab" onclick="oTab('tech',1)">Technical Flows</div>
+      <div class="otab" onclick="oTab('files',2)">Download Files</div>
+      <div class="otab" onclick="oTab('cfg',3)">Config Summary</div>
+    </div>
+
+    <!-- NL FLOWS -->
+    <div class="tpanel active" id="tp-flows">
+      <div id="nl-out"></div>
+    </div>
+
+    <!-- TECH FLOWS -->
+    <div class="tpanel" id="tp-tech">
+      <div id="tech-out"></div>
+    </div>
+
+    <!-- DOWNLOAD FILES -->
+    <div class="tpanel" id="tp-files">
+      <div class="sb">📦 The four integration files below were generated statically and are already on disk alongside this <code>index.html</code>. Click any card to open the file. If you deployed this as a Vercel/Netlify app, download the whole repo — the files are in the same directory as <code>index.html</code>.</div>
+
+      <div class="file-grid" id="file-grid-out"></div>
+
+      <div style="margin-top:8px;">
+        <div class="slabel">Installation commands</div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px;font-family:var(--fm);font-size:12px;color:var(--text2);line-height:2;">
+          <span style="color:var(--text3)"># TypeScript</span><br/>
+          npm install -D jest ts-jest @types/jest @types/node typescript<br/>
+          npx jest liberis_integration.test.ts --verbose<br/>
+          <br/>
+          <span style="color:var(--text3)"># Python</span><br/>
+          pip install httpx pytest pytest-asyncio<br/>
+          pytest test_liberis_integration.py -v
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div class="slabel">Next steps — sandbox phase</div>
+        <div class="ib">Once you have Liberis sandbox credentials from your partner manager (<a href="https://docs.liberis.com/v3/docs/sandbox" target="_blank" style="color:var(--accent)">docs.liberis.com/v3/docs/sandbox</a>), replace all <span class="tag tg-mock">MOCK</span> stub functions in the integration files with real calls to your platform. The test suites run against both mocked and live sandbox responses.</div>
+      </div>
+    </div>
+
+    <!-- CONFIG SUMMARY -->
+    <div class="tpanel" id="tp-cfg">
+      <div id="cfg-out"></div>
+    </div>
+
+    <div class="brow">
+      <button class="btn btn-s" onclick="goTo(4)">← Reconfigure</button>
+      <button class="btn btn-teal" onclick="dlConfigJson()">↓ Export Config JSON</button>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+<div class="sctop" id="sctop" onclick="document.getElementById('ms').scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────
+let cur = 1;
+let schemaData = null;
+let schemaEndpoints = [];
+const PROG = {1:16, 2:32, 3:50, 4:68, 5:100};
+const REGION_URLS = {uk:'https://platform.eu.liberis.com', us:'https://platform.us.liberis.com', eu:'https://platform.eu.liberis.com'};
+
+// ─────────────────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────────────────
+function goTo(n) {
+  document.getElementById('view-' + cur).classList.remove('active');
+  document.getElementById('nav-' + cur).classList.remove('active');
+  if (n > cur) {
+    document.getElementById('nav-' + cur).classList.add('done');
+    document.querySelector('#nav-' + cur + ' .dot').textContent = '✓';
+  }
+  cur = n;
+  var v = document.getElementById('view-' + n);
+  v.classList.add('active', 'fu');
+  setTimeout(function(){ v.classList.remove('fu'); }, 400);
+  document.getElementById('nav-' + n).classList.add('active');
+  document.getElementById('pf').style.width = PROG[n] + '%';
+  document.getElementById('ms').scrollTo({top:0, behavior:'smooth'});
+  if (n === 5) buildPlaybook();
+}
+
+function updateBaseUrl() {
+  var r = document.getElementById('pRegion').value;
+  document.getElementById('pBaseUrl').value = REGION_URLS[r];
+}
+
+// ─────────────────────────────────────────────────────────
+// SCHEMA UPLOAD
+// ─────────────────────────────────────────────────────────
+function doDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag'); }
+function doLeave() { document.getElementById('dropZone').classList.remove('drag'); }
+function doDrop(e) { e.preventDefault(); doLeave(); var f = e.dataTransfer.files[0]; if (f) readFile(f); }
+function loadSchemaFile(inp) { if (inp.files[0]) readFile(inp.files[0]); }
+
+function readFile(f) {
+  var r = new FileReader();
+  r.onload = function(ev) {
+    document.getElementById('schemaPaste').value = ev.target.result;
+    parseSchema(ev.target.result, f.name);
+  };
+  r.readAsText(f);
+}
+
+function parseSchemaAndContinue() {
+  var txt = document.getElementById('schemaPaste').value.trim();
+  if (txt) parseSchema(txt, 'pasted');
+  goTo(3);
+}
+
+function skipSchema() { schemaData = null; schemaEndpoints = []; goTo(3); }
+
+function parseSchema(txt, fname) {
+  try {
+    var parsed = JSON.parse(txt);
+    schemaData = parsed;
+    schemaEndpoints = [];
+    if (parsed.paths) {
+      var methods = ['get','post','put','patch','delete'];
+      Object.keys(parsed.paths).forEach(function(path) {
+        var pathObj = parsed.paths[path];
+        methods.forEach(function(method) {
+          if (pathObj[method]) {
+            schemaEndpoints.push({
+              method: method.toUpperCase(),
+              path: path,
+              summary: pathObj[method].summary || pathObj[method].operationId || path,
+              operationId: pathObj[method].operationId
+            });
+          }
+        });
+      });
+    }
+    var ep = schemaEndpoints.length;
+    var preview = schemaEndpoints.slice(0, 10).map(function(e) {
+      return (e.method + '      ').slice(0,7) + e.path + (e.summary !== e.path ? '  // ' + e.summary : '');
+    }).join('\n') + (ep > 10 ? '\n... and ' + (ep - 10) + ' more' : '');
+    document.getElementById('schemaResult').style.display = 'block';
+    document.getElementById('schemaResult').innerHTML =
+      '<div class="schema-badge">✓ ' + ep + ' endpoint' + (ep !== 1 ? 's' : '') + ' loaded from ' + fname + '</div>' +
+      (ep > 0 ? '<div class="schema-preview">' + preview + '</div>' : '');
+  } catch(e) {
+    document.getElementById('schemaResult').style.display = 'block';
+    document.getElementById('schemaResult').innerHTML = '<div class="wb">⚠ Could not parse schema (' + e.message + '). Proceeding with mocks.</div>';
+    schemaData = null; schemaEndpoints = [];
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// PRODUCT CARD TOGGLE
+// ─────────────────────────────────────────────────────────
+function toggleCard(id, on) {
+  document.getElementById('c-' + id).classList.toggle('sel', on);
+  var cfg = document.getElementById(id + '-cfg');
+  if (cfg) cfg.style.display = on ? 'block' : 'none';
+}
+
+// ─────────────────────────────────────────────────────────
+// CONFIG GETTER
+// ─────────────────────────────────────────────────────────
+function getConfig() {
+  var r = document.getElementById('pRegion').value;
+  return {
+    platform: {
+      name: document.getElementById('pName').value || 'MyPlatform',
+      type: document.getElementById('pType').value,
+      region: r,
+      baseUrl: REGION_URLS[r],
+      env: document.getElementById('pEnv').value,
+      currency: document.getElementById('pCur').value,
+      revenueType: document.getElementById('pRev').value
+    },
+    onboarding: {
+      trigger: document.getElementById('oTrigger').value,
+      journey: document.getElementById('oJourney').value,
+      nl: document.getElementById('oNL').value,
+      prepop: {
+        name: document.getElementById('pp_name').checked,
+        address: document.getElementById('pp_addr').checked,
+        revenue: document.getElementById('pp_rev').checked,
+        email: document.getElementById('pp_email').checked,
+        phone: document.getElementById('pp_phone').checked,
+        dob: document.getElementById('pp_dob').checked,
+        reg: document.getElementById('pp_reg').checked
+      }
+    },
+    products: {
+      bca: document.getElementById('en_bca').checked,
+      bcaMin: document.getElementById('bcaMin').value,
+      bcaMax: document.getElementById('bcaMax').value,
+      bcaPresets: document.getElementById('bcaPresets').value === 'true',
+      flexi: document.getElementById('en_flexi').checked,
+      renewal: document.getElementById('en_renewal').checked,
+      renewalTrigger: document.getElementById('renewalTrigger').value
+    },
+    rules: {
+      minMonths: document.getElementById('minMonths').value,
+      minRev: document.getElementById('minRev').value,
+      repMech: document.getElementById('repMech').value,
+      whitelist: document.getElementById('en_wl').checked,
+      blocklist: document.getElementById('en_bl').checked
+    },
+    schema: {
+      loaded: !!schemaData,
+      endpointCount: schemaEndpoints.length
+    }
+  };
+}
+
+// ─────────────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────────────
+function oTab(name, idx) {
+  var tabs = document.querySelectorAll('.otab');
+  var panels = ['tp-flows','tp-tech','tp-files','tp-cfg'];
+  tabs.forEach(function(t, i) { t.classList.toggle('active', i === idx); });
+  panels.forEach(function(p) { document.getElementById(p).classList.remove('active'); });
+  document.getElementById('tp-' + name).classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────
+// ACCORDION
+// ─────────────────────────────────────────────────────────
+function toggleAcc(el) { el.classList.toggle('open'); }
+
+// ─────────────────────────────────────────────────────────
+// BUILD PLAYBOOK
+// ─────────────────────────────────────────────────────────
+function buildPlaybook() {
+  var c = getConfig();
+  var cur2 = c.platform.currency;
+  var pName = c.platform.name;
+
+  document.getElementById('outTitle').textContent = pName + ' × Liberis — Integration Playbook';
+  document.getElementById('outDesc').textContent =
+    'Generated for ' + pName + ' · Region: ' + c.platform.region.toUpperCase() +
+    ' · Base URL: ' + c.platform.baseUrl +
+    (c.schema.loaded ? ' · Schema: ' + c.schema.endpointCount + ' partner endpoints' : ' · Schema: mocks only');
+
+  buildNL(c, cur2, pName);
+  buildTech(c, cur2, pName);
+  buildFiles(c, pName);
+  buildCfg(c, cur2, pName);
+}
+
+// ─────────────────────────────────────────────────────────
+// NL FLOWS
+// ─────────────────────────────────────────────────────────
+function buildNL(c, cur2, pName) {
+  var pp = [];
+  if (c.onboarding.prepop.name) pp.push('legal name');
+  if (c.onboarding.prepop.address) pp.push('address');
+  if (c.onboarding.prepop.revenue) pp.push('revenue history');
+  if (c.onboarding.prepop.email) pp.push('email');
+  if (c.onboarding.prepop.phone) pp.push('phone');
+  if (c.onboarding.prepop.dob) pp.push('date of birth');
+  if (c.onboarding.prepop.reg) pp.push('company reg no.');
+  var ppStr = pp.length ? pp.join(', ') : 'merchant data';
+
+  var triggerDesc = {
+    dashboard: 'it is always visible in their dashboard',
+    threshold: 'a revenue threshold has been crossed',
+    campaign: 'they have been targeted in a campaign',
+    organic: 'they navigate to it from the menu'
+  }[c.onboarding.trigger] || 'they are eligible';
+
+  var journeyDesc = {
+    embedded: 'fully embedded within ' + pName + '\'s UI',
+    redirect: 'redirected to a Liberis-hosted journey',
+    iframe: 'shown a Click2Sign iFrame within ' + pName
+  }[c.onboarding.journey] || 'handled by your platform';
+
+  function acc(icon, title, body) {
+    return '<div class="acc" onclick="toggleAcc(this)">' +
+      '<div class="ach"><span class="at">' + icon + ' ' + title + '</span><span class="ac">▾</span></div>' +
+      '<div class="acb"><div class="nlf">' + body + '</div></div></div>';
+  }
+
+  var html = '';
+
+  html += acc('🚀', 'Flow 1 — Merchant Onboarding &amp; Registration',
+    '<h3>Overview</h3>' +
+    '<p>' + (c.onboarding.nl.trim() || ('A merchant on <b>' + pName + '</b> discovers financing because ' + triggerDesc + '. When they express interest, the registration process begins automatically in the background.')) + '</p>' +
+    '<h3>Step by step</h3>' +
+    '<p><span class="ap">▸ ' + pName + '</span> checks platform-level eligibility: minimum ' + c.rules.minMonths + ' months on platform and ' + cur2 + parseInt(c.rules.minRev).toLocaleString() + '/month average revenue' + (c.rules.whitelist ? ', or merchant is on the whitelist' : '') + '.</p>' +
+    '<p><span class="am">▸ Merchant</span> clicks the CTA. Because ' + pName + ' already holds <em>' + ppStr + '</em>, the pre-population call minimises the number of fields shown.</p>' +
+    '<p><span class="aa">▸ Automated</span> — ' + pName + ' calls <code>POST /auth/v1/token</code> using client_credentials grant. Token is cached for 23 hours.</p>' +
+    '<p><span class="aa">▸ Automated</span> — ' + pName + ' calls <code>POST /data/v1/clients</code> with <code>partner_client_id</code>, <code>client_start_date</code>, and <code>entity_type</code>. A UUID v4 <code>Idempotency-Key</code> header is required. Returns a <code>status_check_id</code>.</p>' +
+    '<p><span class="al">▸ Liberis</span> validates the record asynchronously. ' + pName + ' polls <code>GET /data/v1/clients/status/{status_check_id}</code> until the top-level <code>status = "Completed"</code>. Check each <code>result[].status.state</code> — valid states: Pending → Completed | Duplicate | Conflict | Failed.</p>' +
+    '<p><span class="am">▸ Merchant</span> sees a "checking eligibility" message. The async poll happens server-side — the merchant never waits on a loading screen.</p>'
+  );
+
+  html += acc('📊', 'Flow 2 — Revenue Data Submission',
+    '<h3>Overview</h3>' +
+    '<p>Revenue data powers Liberis underwriting. ' + pName + ' pushes ' + (c.platform.revenueType === 'card' ? 'card terminal / acquirer volumes' : c.platform.revenueType === 'openbanking' ? 'open banking monthly revenue' : 'mixed revenue data') + ' for each merchant on a daily cadence. Merchants do not interact with this flow.</p>' +
+    '<h3>Step by step</h3>' +
+    '<p><span class="aa">▸ Automated (daily)</span> — ' + pName + ' calls <code>POST /data/v1/revenueClaims</code> with an array of revenue claims. Each claim requires <code>partner_client_id</code>, <code>time_period</code> (ISO 8601 start/end with timezone), <code>total_amount</code>, <code>transaction_count</code>, <code>currency</code>, and a deterministic <code>unique_reference</code>.</p>' +
+    '<p><span class="al">▸ Liberis rule</span>: Use <b>negative</b> <code>total_amount</code> and <code>transaction_count</code> for returns and chargebacks. Never include the current partial month. An <code>Idempotency-Key</code> header is required.</p>' +
+    '<p><span class="aa">▸ Automated</span> — Poll <code>GET /data/v1/revenueClaims/status/{id}</code> to confirm validation. Failed items include <code>validation_errors</code> for re-submission.</p>'
+  );
+
+  html += acc('💡', 'Flow 3 — Eligibility Check &amp; Offer Display',
+    '<h3>Overview</h3>' +
+    '<p>Once client and revenue data are validated, ' + pName + ' surfaces personalised, underwritten offers to the eligible merchant.</p>' +
+    '<h3>Step by step</h3>' +
+    '<p><span class="aa">▸ Automated (dashboard load)</span> — ' + pName + ' calls <code>GET /create/v2/advert/{merchant_id}</code>. Returns advert copy (header, CTA text, offer_status) if eligible. Returns <b>404</b> if not — use this to show/hide the financing banner without exposing ineligibility to the merchant.</p>' +
+    '<p><span class="am">▸ Merchant</span> sees the banner' + (c.products.bca ? ' (e.g. "You may qualify for up to ' + cur2 + parseInt(c.products.bcaMax).toLocaleString() + '")' : '') + '. Clicking it triggers the full offer request.</p>' +
+    '<p><span class="ap">▸ ' + pName + '</span> calls <code>POST /create/v2/offers</code> with the full application payload: merchant_id, currency, consents (<code>bureau_search: true</code>' + (c.platform.region === 'uk' ? ' — triggers automated underwriting (UK only)' : '') + ', <code>application_comms: true</code>), applicant details, company details, and ' + (c.platform.revenueType === 'card' ? '<code>payment_channels[].monthly_volumes</code>' : '<code>monthly_revenues</code>') + '.</p>' +
+    '<p><span class="al">▸ Liberis</span> returns <code>liberis_id</code> (store this for renewals), one or more product offers' + (c.products.bca ? ' including BCA with <code>funded_amount</code>, <code>factor_rate</code>, <code>split_percentage</code>, and <code>offer_id</code>' : '') + ', and <code>expires_at</code>.</p>' +
+    '<p><span class="am">▸ Merchant</span> browses ' + (c.products.bcaPresets ? '3 curated preset offers' : 'the full offer range') + '. To reprice, ' + pName + ' re-calls <code>POST /create/v2/offers</code> with <code>amount_requested</code> + <code>product_id</code>.</p>'
+  );
+
+  html += acc('✅', 'Flow 4 — Offer Acceptance &amp; Deal Activation',
+    '<h3>Overview</h3>' +
+    '<p>The merchant selects their preferred offer. They are ' + journeyDesc + '. Webhooks drive all subsequent status updates.</p>' +
+    '<h3>Step by step</h3>' +
+    '<p><span class="am">▸ Merchant</span> confirms their selected offer.' + (c.onboarding.journey === 'redirect' ? ' Since this is a redirect journey, ' + pName + ' first calls <code>POST /create/v2/adverts/{ref}/accept</code> to get a <code>redirect_url</code> to send the merchant to.' : c.onboarding.journey === 'iframe' ? ' The Click2Sign iFrame is shown inline — the merchant signs without leaving ' + pName + '.' : ' The acceptance flow is embedded in ' + pName + '\'s UI.') + '</p>' +
+    '<p><span class="ap">▸ ' + pName + '</span> calls <code>POST /create/v2/offers/{offer_id}/accept</code>. Optionally include <code>bank_details</code> to speed up disbursement. Response includes <code>application_id</code> and <code>liberis_id</code>.</p>' +
+    '<p><span class="al">▸ Liberis</span> begins the fulfilment pipeline. Webhooks fire sequentially to your endpoint: <code>application.submitted</code> → <code>application.approved</code> → <code>deal.activated</code> → <code>funds.disbursed</code>. For manual review applications: <code>application.manual_review</code> fires — surface "we\'re reviewing your application" to the merchant.</p>' +
+    '<p><span class="ap">▸ ' + pName + '</span> receives webhooks and updates the merchant dashboard status in real time.</p>'
+  );
+
+  html += acc('💳', 'Flow 5 — Balance &amp; Repayment',
+    '<h3>Overview</h3>' +
+    '<p>Repayment happens automatically as a percentage of daily revenue. ' + (c.rules.repMech === 'esplit' ? pName + ' remits the split via the Settlement API.' : 'The card terminal processor handles the split at point of sale.') + ' Merchants can view their outstanding balance at any time.</p>' +
+    '<h3>Step by step</h3>' +
+    '<p><span class="aa">▸ Automated (dashboard load)</span> — ' + pName + ' calls <code>GET /create/v2/balance/{merchant_id}</code> to surface the current outstanding balance and active split percentage in the merchant portal.</p>' +
+    (c.rules.repMech === 'esplit' ? '<p><span class="ap">▸ ' + pName + '</span> calls <code>POST /settlements/payments</code> daily to register each repayment batch remitted to Liberis.</p>' : '') +
+    '<p><span class="al">▸ Liberis</span> fires <code>payment.received</code> webhooks per batch and <code>deal.completed</code> when the advance is fully repaid.</p>' +
+    (c.products.renewal ? '<p><span class="al">▸ Liberis</span> fires <code>renewal.eligible</code> when the merchant hits ' + c.products.renewalTrigger + '% repayment. ' + pName + ' resurfaces the offer banner — this time passing <code>liberis_id</code> in the <code>POST /create/v2/offers</code> call to skip re-registration.</p>' : '')
+  );
+
+  document.getElementById('nl-out').innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────
+// TECHNICAL FLOWS
+// ─────────────────────────────────────────────────────────
+function buildTech(c, cur2, pName) {
+  function hb(who) {
+    var map = {
+      partner: '<span class="hb hb-p">PARTNER</span>',
+      merchant: '<span class="hb hb-m">MERCHANT</span>',
+      liberis: '<span class="hb hb-l">LIBERIS</span>',
+      auto: '<span class="hb hb-a">AUTO</span>'
+    };
+    return who.split(',').map(function(w) { return map[w.trim()] || ''; }).join(' ');
+  }
+
+  function row(n, method, ep, desc, trigger, human, note) {
+    return '<tr>' +
+      '<td style="font-family:var(--fm);font-size:10px;color:var(--text3)">' + n + '</td>' +
+      '<td><span class="' + (method === 'POST' ? 'mpost' : 'mget') + '">' + method + '</span></td>' +
+      '<td class="ep">' + ep + '</td>' +
+      '<td style="color:var(--text2);font-size:12px">' + desc + '</td>' +
+      '<td style="font-size:11px;color:var(--text3)">' + trigger + '</td>' +
+      '<td>' + human + '</td>' +
+      '<td style="font-size:11px;color:var(--text3)">' + note + '</td>' +
+      '</tr>';
+  }
+
+  function table(title, sub, rows) {
+    return '<div style="margin-bottom:28px">' +
+      '<div style="font-family:var(--fh);font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px">' + title + '</div>' +
+      '<div style="font-size:12px;color:var(--text2);margin-bottom:10px">' + sub + '</div>' +
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">' +
+      '<table class="ft"><thead><tr><th>#</th><th>Method</th><th>Endpoint</th><th>Purpose</th><th>Trigger</th><th>Human Input</th><th>Notes</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div></div>';
+  }
+
+  var html = '';
+
+  html += table('Auth', 'POST /auth/v1/token — Base: ' + c.platform.baseUrl,
+    row('1.1','POST','/auth/v1/token','client_credentials → Bearer token','On session start / expiry',hb('auto'),'expires_in: 86400s. Cache, refresh 1h early.')
+  );
+
+  html += table('Merchant Registration', 'Async — poll until Completed',
+    row('2.1','POST','/data/v1/clients','Register merchant (anonymised)','On eligibility trigger',hb('partner') + hb('auto'),'Required: partner_client_id, client_start_date, entity_type. Idempotency-Key (UUID v4) required.') +
+    row('2.2','GET','/data/v1/clients/status/{id}','Poll validation state','After 2.1',hb('auto'),'Check result[].status.state per item. States: Pending → Completed | Duplicate | Conflict | Failed.')
+  );
+
+  html += table('Revenue Claims', 'POST /data/v1/revenueClaims — daily delta cadence',
+    row('3.1','POST','/data/v1/revenueClaims','Submit revenue claim batch','Daily scheduled job',hb('auto'),'unique_reference must be deterministic. Negative amounts for returns. No partial months. Idempotency-Key required.') +
+    row('3.2','GET','/data/v1/revenueClaims/status/{id}','Poll validation','After 3.1',hb('auto'),'Failed items include validation_errors. Re-submit corrected records.')
+  );
+
+  html += table('Eligibility &amp; Offers', 'bureau_search:true → auto-underwriting' + (c.platform.region === 'uk' ? ' (UK only for automated decisions)' : ''),
+    row('4.1','GET','/create/v2/advert/{merchant_id}','Eligibility probe + advert copy','On dashboard load',hb('auto'),'404 = ineligible — use to show/hide banner without exposing reason.') +
+    row('4.2','POST','/create/v2/offers','Full offer request + underwriting','On merchant CTA click',hb('merchant') + hb('partner'),'Pass ' + (c.platform.revenueType === 'card' ? 'payment_channels[].monthly_volumes' : 'monthly_revenues') + '. Returns liberis_id — store it.') +
+    row('4.3','POST','/create/v2/offers','Reprice for custom amount','On merchant adjusting amount',hb('merchant'),'Resend with amount_requested + product_id. apply_offer_presets: ' + c.products.bcaPresets + '.')
+  );
+
+  html += table('Offer Acceptance', 'Journey: ' + c.onboarding.journey,
+    (c.onboarding.journey === 'redirect' ? row('5.0','POST','/create/v2/adverts/{ref}/accept','Get redirect_url for Liberis-hosted journey','On CTA click (redirect mode only)',hb('merchant'),'Returns redirect_url. Send merchant to it.') : '') +
+    row('5.1','POST','/create/v2/offers/{offer_id}/accept','Lock offer, begin fulfilment','On merchant confirmation',hb('merchant'),'Optional bank_details speeds disbursement. 409 = already accepted.') +
+    row('5.2','WEBHOOK','→ your endpoint','application.* + deal.* events','Liberis → partner webhook URL',hb('liberis') + hb('auto'),'Implement respond-to-action for action webhooks. Store application_id.')
+  );
+
+  html += table('Balance &amp; Repayment', c.rules.repMech === 'esplit' ? 'Partner e-split: remit via Settlement API' : 'Terminal split: acquirer handles at POS',
+    row('6.1','GET','/create/v2/balance/{merchant_id}','Outstanding balance + split %','On merchant dashboard load',hb('auto'),'Real-time. Surface in merchant portal.') +
+    (c.rules.repMech === 'esplit' ? row('6.2','POST','/settlements/payments','Register daily payment batch','Daily',hb('auto'),'Include deal_id, amount, date.') : '') +
+    row('6.3','WEBHOOK','payment.received, deal.completed','Repayment confirmations','Liberis → webhook URL',hb('auto'),'Use deal.completed to trigger renewal flow.')
+  );
+
+  document.getElementById('tech-out').innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────
+// FILE DOWNLOAD CARDS
+// ─────────────────────────────────────────────────────────
+function buildFiles(c, pName) {
+  var schemaNote = c.schema.loaded
+    ? c.schema.endpointCount + ' partner endpoints loaded — stub comments reference your schema.'
+    : 'No schema uploaded — all partner stubs are generic MOCKs.';
+
+  var files = [
+    {
+      name: 'liberis_integration.ts',
+      lang: 'ts',
+      desc: 'TypeScript client for all v3 Liberis endpoints + orchestration flows. ' + schemaNote,
+      pills: ['pill-ts TypeScript', 'pill-ts Node.js 18+']
+    },
+    {
+      name: 'liberis_integration.test.ts',
+      lang: 'ts',
+      desc: '27 Jest tests across 6 suites. Auth, registration, revenue, offers, acceptance, webhooks.',
+      pills: ['pill-ts Jest', 'pill-ts ts-jest']
+    },
+    {
+      name: 'liberis_integration.py',
+      lang: 'py',
+      desc: 'Python async client using httpx + orchestration flows. ' + schemaNote,
+      pills: ['pill-py Python 3.10+', 'pill-py httpx']
+    },
+    {
+      name: 'test_liberis_integration.py',
+      lang: 'py',
+      desc: '27 pytest tests across 6 suites. Full async mock coverage for all flows.',
+      pills: ['pill-py pytest', 'pill-py pytest-asyncio']
+    },
+    {
+      name: 'README.md',
+      lang: 'md',
+      desc: 'Setup instructions, function reference table, MOCK replacement guide, and API endpoint index.',
+      pills: ['pill-md Markdown']
+    },
+    {
+      name: 'index.html',
+      lang: 'html',
+      desc: 'This configurator app. Deploy to Vercel/Netlify with no build step.',
+      pills: ['pill-html Static HTML', 'pill-html No build step']
+    }
+  ];
+
+  var html = '';
+  files.forEach(function(f) {
+    var pillsHtml = f.pills.map(function(p) {
+      var parts = p.split(' ');
+      return '<span class="fc-pill ' + parts[0] + '">' + parts.slice(1).join(' ') + '</span>';
+    }).join('');
+    html += '<div class="file-card">' +
+      '<div class="fc-name">📄 ' + f.name + '</div>' +
+      '<div class="fc-desc">' + f.desc + '</div>' +
+      '<div class="fc-pills">' + pillsHtml + '</div>' +
+      '</div>';
+  });
+
+  document.getElementById('file-grid-out').innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────
+// CONFIG SUMMARY
+// ─────────────────────────────────────────────────────────
+function buildCfg(c, cur2, pName) {
+  function kv(k, v) {
+    return '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
+  }
+  function tbl(title, rows) {
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:12px">' +
+      '<div style="padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-family:var(--fm);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">' + title + '</div>' +
+      '<table class="cfg-tbl">' + rows + '</table></div>';
+  }
+
+  var pp = Object.entries(c.onboarding.prepop).filter(function(e){ return e[1]; }).map(function(e){ return e[0]; }).join(', ') || 'None';
+
+  var html = '';
+  html += tbl('Platform',
+    kv('Name', c.platform.name) + kv('Type', c.platform.type) +
+    kv('Region', c.platform.region.toUpperCase()) + kv('Base URL', c.platform.baseUrl) +
+    kv('Environment', c.platform.env) + kv('Currency', c.platform.currency) +
+    kv('Revenue type', c.platform.revenueType));
+  html += tbl('Schema',
+    kv('Loaded', c.schema.loaded ? 'Yes' : 'No — mocks used') +
+    kv('Endpoints detected', c.schema.endpointCount));
+  html += tbl('Onboarding',
+    kv('Trigger', c.onboarding.trigger) + kv('Journey type', c.onboarding.journey) + kv('Pre-populated', pp));
+  html += tbl('Products',
+    kv('BCA', c.products.bca ? 'Enabled — ' + cur2 + parseInt(c.products.bcaMin).toLocaleString() + ' to ' + cur2 + parseInt(c.products.bcaMax).toLocaleString() : 'Disabled') +
+    kv('Flexi Loan', c.products.flexi ? 'Enabled' : 'Disabled') +
+    kv('Renewals', c.products.renewal ? 'Enabled — trigger: ' + c.products.renewalTrigger + '%' : 'Disabled') +
+    kv('apply_offer_presets', String(c.products.bcaPresets)));
+  html += tbl('Rules &amp; Settlement',
+    kv('Min months on platform', c.rules.minMonths) +
+    kv('Min monthly revenue', cur2 + parseInt(c.rules.minRev).toLocaleString()) +
+    kv('Repayment mechanism', c.rules.repMech) +
+    kv('Whitelist', c.rules.whitelist ? 'Enabled' : 'Off') +
+    kv('Blocklist', c.rules.blocklist ? 'Enabled' : 'Off'));
+  html += '<div class="ib">🔜 <b>Sandbox phase:</b> Once you have Liberis sandbox credentials, replace all MOCK stubs in the integration files with real calls to your platform. The test suites are pre-structured to run against both mocked and live sandbox responses.</div>';
+
+  document.getElementById('cfg-out').innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────
+// EXPORT CONFIG JSON
+// ─────────────────────────────────────────────────────────
+function dlConfigJson() {
+  var c = getConfig();
+  var blob = new Blob([JSON.stringify(c, null, 2)], {type: 'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'liberis-config-' + (c.platform.name || 'platform').toLowerCase().replace(/\s+/g, '-') + '.json';
+  a.click();
+}
+
+// ─────────────────────────────────────────────────────────
+// SCROLL TOP
+// ─────────────────────────────────────────────────────────
+document.getElementById('ms').addEventListener('scroll', function() {
+  document.getElementById('sctop').classList.toggle('vis', this.scrollTop > 300);
+});
+</script>
+</body>
+</html>
