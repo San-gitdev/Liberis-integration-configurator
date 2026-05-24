@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Liberis Integration Configurator v2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Fraunces:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#0b0c0f;--bg2:#111318;--bg3:#181a22;--card:#1c1f2a;
+  --border:#252a3a;--border2:#303650;
+  --accent:#e8ff6e;--accent2:#7ee8b2;
+  --text:#dde2f0;--text2:#8892b0;--text3:#495270;
+  --blue:#7eb8f7;--purple:#b39ddb;--amber:#ffd166;--teal:#5eead4;--coral:#ff8a80;--green:#86efac;
+  --fh:'Fraunces',serif;--fb:'DM Sans',sans-serif;--fm:'IBM Plex Mono',monospace;
+  --r:8px;--r2:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;line-height:1.6;min-height:100vh;}
+.shell{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:260px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.logo{padding:22px 20px 16px;border-bottom:1px solid var(--border);}
+.logo .w1{font-family:var(--fh);font-size:17px;font-weight:900;color:var(--accent);letter-spacing:-.03em;}
+.logo .w2{font-size:10px;color:var(--text3);font-family:var(--fm);margin-top:2px;letter-spacing:.04em;}
+.logo .badge{display:inline-block;background:rgba(232,255,110,.12);color:var(--accent);font-family:var(--fm);font-size:9px;padding:1px 6px;border-radius:3px;margin-top:5px;letter-spacing:.06em;}
+.step-nav{padding:14px 10px;flex:1;}
+.sn{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;margin-bottom:1px;transition:background .15s;position:relative;}
+.sn:hover{background:var(--bg3);}
+.sn.active{background:rgba(232,255,110,.07);}
+.sn.done .dot{background:var(--teal);border-color:var(--teal);color:#0b0c0f;font-weight:700;}
+.dot{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-family:var(--fm);font-size:10px;color:var(--text3);transition:all .2s;}
+.sn.active .dot{border-color:var(--accent);background:var(--accent);color:#0b0c0f;font-weight:700;}
+.si .sl{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text2);}
+.sn.active .sl{color:var(--accent);}
+.si .sd{font-size:11px;color:var(--text3);margin-top:1px;}
+.sn:not(:last-child)::before{content:'';position:absolute;left:20px;top:33px;width:1px;height:16px;background:var(--border);}
+
+/* PROGRESS */
+.prog{height:2px;background:var(--border);position:fixed;top:0;left:0;right:0;z-index:100;}
+.prog-fill{height:100%;background:var(--accent);transition:width .4s ease;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;}
+.view{display:none;padding:44px 52px;max-width:900px;}
+.view.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.fu{animation:fadeUp .3s ease both;}
+
+/* TYPOGRAPHY */
+.ey{font-family:var(--fm);font-size:10px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+.vt{font-family:var(--fh);font-size:26px;font-weight:900;color:var(--text);letter-spacing:-.03em;line-height:1.2;}
+.vd{font-size:13.5px;color:var(--text2);margin-top:8px;max-width:640px;line-height:1.75;}
+.vh{margin-bottom:28px;}
+.slabel{font-family:var(--fm);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px;margin-top:2px;}
+.divider{height:1px;background:var(--border);margin:24px 0;}
+
+/* FORM */
+.f{margin-bottom:16px;}
+.f label{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px;font-family:var(--fm);}
+.f input,.f select,.f textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:9px 12px;font-size:13px;font-family:var(--fb);outline:none;transition:border-color .15s;resize:vertical;}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--accent);}
+.f textarea{min-height:70px;}
+.f select option{background:var(--bg3);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* TOGGLE */
+.tw{display:flex;align-items:center;gap:8px;cursor:pointer;margin-right:6px;}
+.tg{position:relative;width:36px;height:20px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:10px;transition:all .2s;flex-shrink:0;}
+.tg::after{content:'';position:absolute;left:2px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--text3);transition:all .2s;}
+input[type=checkbox]{display:none;}
+input[type=checkbox]:checked+.tg{background:rgba(232,255,110,.18);border-color:var(--accent);}
+input[type=checkbox]:checked+.tg::after{left:calc(100% - 15px);background:var(--accent);}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-bottom:14px;transition:border-color .15s;}
+.card.sel{border-color:var(--accent);background:rgba(232,255,110,.03);}
+.ct{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--text);}
+.cd{font-size:12.5px;color:var(--text2);margin-top:5px;line-height:1.6;}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-family:var(--fm);font-size:10px;font-weight:500;letter-spacing:.04em;}
+.tg-api{background:rgba(255,209,102,.1);color:var(--amber);border:1px solid rgba(255,209,102,.2);}
+.tg-mcp{background:rgba(179,157,219,.1);color:var(--purple);border:1px solid rgba(179,157,219,.2);}
+.tg-mock{background:rgba(255,138,128,.1);color:var(--coral);border:1px solid rgba(255,138,128,.2);}
+.tg-ok{background:rgba(134,239,172,.1);color:var(--green);border:1px solid rgba(134,239,172,.2);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:var(--r);font-size:12.5px;font-weight:600;font-family:var(--fh);cursor:pointer;transition:all .15s;border:none;}
+.btn-p{background:var(--accent);color:#0b0c0f;}
+.btn-p:hover{background:#f0ff85;transform:translateY(-1px);}
+.btn-s{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-s:hover{border-color:var(--accent);color:var(--accent);}
+.btn-t{background:rgba(126,184,247,.1);color:var(--blue);border:1px solid rgba(126,184,247,.2);}
+.btn-t:hover{background:rgba(126,184,247,.18);}
+.btn-purple{background:rgba(179,157,219,.12);color:var(--purple);border:1px solid rgba(179,157,219,.25);}
+.btn-purple:hover{background:rgba(179,157,219,.22);}
+.btn-red{background:rgba(255,138,128,.1);color:var(--coral);border:1px solid rgba(255,138,128,.2);}
+.btn-red:hover{background:rgba(255,138,128,.18);}
+.brow{display:flex;align-items:center;gap:10px;margin-top:24px;flex-wrap:wrap;}
+
+/* INFO BLOCKS */
+.ib{background:rgba(232,255,110,.04);border:1px solid rgba(232,255,110,.15);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text2);margin-bottom:16px;line-height:1.65;}
+.wb{background:rgba(255,138,128,.04);border:1px solid rgba(255,138,128,.15);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text2);margin-bottom:16px;line-height:1.65;}
+.sb{background:rgba(94,234,212,.04);border:1px solid rgba(94,234,212,.15);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text2);margin-bottom:16px;line-height:1.65;}
+.pb{background:rgba(179,157,219,.04);border:1px solid rgba(179,157,219,.15);border-radius:var(--r);padding:12px 14px;font-size:12.5px;color:var(--text2);margin-bottom:16px;line-height:1.65;}
+
+/* CODE BLOCK */
+.codeblock{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px 16px 16px 16px;font-family:var(--fm);font-size:11.5px;color:var(--teal);line-height:1.7;overflow-x:auto;white-space:pre;margin-bottom:12px;}
+.codeblock .cm{color:var(--text3);}
+.codeblock .ck{color:var(--blue);}
+.codeblock .cs{color:var(--amber);}
+.copy-btn{position:absolute;top:10px;right:10px;background:var(--card);border:1px solid var(--border2);color:var(--text2);padding:3px 8px;border-radius:4px;font-size:10px;font-family:var(--fm);cursor:pointer;transition:all .15s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* STATUS INDICATOR */
+.status-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border-radius:var(--r);margin-bottom:8px;font-size:12.5px;}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-ok{background:var(--green);}
+.dot-warn{background:var(--amber);}
+.dot-err{background:var(--coral);}
+.dot-idle{background:var(--text3);}
+
+/* RUNBOOK */
+.rb-phase{margin-bottom:28px;}
+.rb-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.rb-badge{font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:4px;font-weight:500;}
+.rb-day{background:rgba(232,255,110,.1);color:var(--accent);border:1px solid rgba(232,255,110,.2);}
+.rb-title{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--text);}
+.rb-items{display:flex;flex-direction:column;gap:6px;}
+.rb-item{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);font-size:12.5px;color:var(--text2);line-height:1.6;}
+.rb-item .ri-num{font-family:var(--fm);font-size:10px;color:var(--text3);min-width:24px;margin-top:1px;}
+.rb-item .ri-text b{color:var(--text);font-weight:500;}
+.rb-actor{font-family:var(--fm);font-size:9px;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle;}
+.actor-dev{background:rgba(126,184,247,.1);color:var(--blue);}
+.actor-liberis{background:rgba(232,255,110,.1);color:var(--accent);}
+.actor-auto{background:rgba(94,234,212,.1);color:var(--teal);}
+
+/* MCP CONFIG PANEL */
+.mcp-target-tabs{display:flex;gap:4px;margin-bottom:16px;}
+.mcp-tab{padding:7px 14px;border-radius:6px 6px 0 0;font-family:var(--fm);font-size:11px;cursor:pointer;background:var(--card);border:1px solid var(--border);border-bottom:none;color:var(--text3);transition:all .15s;}
+.mcp-tab.active{background:var(--bg2);color:var(--purple);border-color:rgba(179,157,219,.4);}
+.mcp-panel{display:none;background:var(--bg2);border:1px solid var(--border);border-radius:0 var(--r2) var(--r2) var(--r2);padding:20px;}
+.mcp-panel.active{display:block;}
+
+/* ADAPTER STATUS TABLE */
+.adapter-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
+.adapter-table th{text-align:left;padding:7px 12px;font-family:var(--fm);font-size:9.5px;color:var(--text3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em;background:var(--bg2);}
+.adapter-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text2);}
+.adapter-table tr:hover td{background:rgba(255,255,255,.015);}
+code{font-family:var(--fm);font-size:11px;color:var(--amber);background:rgba(255,209,102,.07);padding:1px 5px;border-radius:3px;}
+
+/* SCROLLTOP */
+.sctop{position:fixed;bottom:24px;right:24px;width:34px;height:34px;background:var(--card);border:1px solid var(--border2);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:14px;opacity:0;transition:all .15s;}
+.sctop:hover{border-color:var(--accent);color:var(--accent);}
+.sctop.vis{opacity:1;}
+
+/* OUTPUT TABS */
+.otabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);}
+.otab{padding:8px 14px;font-size:11px;font-family:var(--fm);color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.otab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tpanel{display:none;}
+.tpanel.active{display:block;}
+
+/* ACCORDION */
+.acc{margin-bottom:10px;}
+.ach{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;user-select:none;}
+.acc.open .ach{border-radius:var(--r) var(--r) 0 0;border-color:var(--accent);border-bottom:none;}
+.at{font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.ac{color:var(--text3);transition:transform .2s;font-size:11px;}
+.acc.open .ac{transform:rotate(180deg);color:var(--accent);}
+.acb{display:none;background:var(--bg2);border:1px solid var(--accent);border-top:none;border-radius:0 0 var(--r) var(--r);padding:18px;}
+.acc.open .acb{display:block;}
+
+@media(max-width:768px){.sidebar{display:none;}.view{padding:24px 18px;}.g2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="prog"><div class="prog-fill" id="pf" style="width:14%"></div></div>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="w1">LIBERIS</div>
+    <div class="w2">INTEGRATION CONFIGURATOR</div>
+    <div class="badge">v2 · MCP-enabled</div>
+  </div>
+  <div class="step-nav">
+    <div class="sn active" onclick="goTo(1)" id="nav-1"><div class="dot">1</div><div class="si"><div class="sl">Platform Profile</div><div class="sd">Region, type, currency</div></div></div>
+    <div class="sn" onclick="goTo(2)" id="nav-2"><div class="dot">2</div><div class="si"><div class="sl">Products & Rules</div><div class="sd">Offerings, eligibility</div></div></div>
+    <div class="sn" onclick="goTo(3)" id="nav-3"><div class="dot">3</div><div class="si"><div class="sl">MCP Server Setup</div><div class="sd">Install, configure, verify</div></div></div>
+    <div class="sn" onclick="goTo(4)" id="nav-4"><div class="dot">4</div><div class="si"><div class="sl">Adapter Mapping</div><div class="sd">Connect your platform APIs</div></div></div>
+    <div class="sn" onclick="goTo(5)" id="nav-5"><div class="dot">5</div><div class="si"><div class="sl">Playbook</div><div class="sd">Day 1–20 runbook</div></div></div>
+    <div class="sn" onclick="goTo(6)" id="nav-6"><div class="dot">6</div><div class="si"><div class="sl">Go Live</div><div class="sd">Production checklist</div></div></div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main" id="ms">
+
+<!-- ══ STEP 1: PLATFORM PROFILE ══ -->
+<div class="view active" id="view-1">
+  <div class="vh">
+    <div class="ey">Step 01 / Platform Profile</div>
+    <div class="vt">Tell us about your platform</div>
+    <div class="vd">This shapes the MCP server's environment file and the Liberis API routing. Region determines which base URL the server connects to.</div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Platform Name</label><input id="pName" placeholder="e.g. SellerHub, Vagaro, eBay" oninput="refreshAll()"/></div>
+    <div class="f"><label>Platform Type</label>
+      <select id="pType" onchange="refreshAll()">
+        <option value="ecommerce">E-commerce Marketplace</option>
+        <option value="booking">Booking / Appointment Platform</option>
+        <option value="pos">Point-of-Sale / Payments</option>
+        <option value="saas">SaaS / Business Software</option>
+        <option value="banking">Banking / Fintech</option>
+      </select>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Region</label>
+      <select id="pRegion" onchange="updateBaseUrl();refreshAll()">
+        <option value="uk">United Kingdom 🇬🇧</option>
+        <option value="us">United States 🇺🇸</option>
+        <option value="eu">Europe 🇪🇺</option>
+      </select>
+    </div>
+    <div class="f"><label>API Base URL (auto-set)</label>
+      <input id="pBaseUrl" value="https://platform.eu.liberis.com" readonly style="opacity:.6;cursor:default;"/>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Currency</label>
+      <select id="pCur" onchange="refreshAll()">
+        <option value="GBP">GBP — British Pound</option>
+        <option value="USD">USD — US Dollar</option>
+        <option value="EUR">EUR — Euro</option>
+      </select>
+    </div>
+    <div class="f"><label>Environment</label>
+      <select id="pEnv" onchange="refreshAll()">
+        <option value="sandbox">Sandbox (testing)</option>
+        <option value="production">Production</option>
+      </select>
+    </div>
+  </div>
+  <div class="f"><label>Revenue data format on your platform</label>
+    <select id="pRev">
+      <option value="card">Card terminal / acquirer (payment_channels + monthly_volumes)</option>
+      <option value="openbanking">Open banking / bank statement (monthly_revenues)</option>
+      <option value="mixed">Mixed sources</option>
+    </select>
+  </div>
+  <div class="brow"><button class="btn btn-p" onclick="goTo(2)">Continue →</button></div>
+</div>
+
+<!-- ══ STEP 2: PRODUCTS & RULES ══ -->
+<div class="view" id="view-2">
+  <div class="vh">
+    <div class="ey">Step 02 / Products & Rules</div>
+    <div class="vt">What to offer and who qualifies</div>
+    <div class="vd">These settings are written into your MCP server's <code>.env</code> file and enforced at runtime on every tool call. They can be changed without redeploying — update the env and restart.</div>
+  </div>
+  <div class="slabel">Products</div>
+  <div class="card sel" id="c-bca">
+    <div class="ch">
+      <div><span class="tag tg-api">BCA</span><div class="ct" style="margin-top:5px">Business Cash Advance</div><div class="cd">Revenue-based advance repaid as % of daily card takings. Most widely available Liberis product.</div></div>
+      <label class="tw"><input type="checkbox" id="en_bca" checked onchange="toggleCard('bca',this.checked);refreshAll()"><span class="tg"></span></label>
+    </div>
+    <div id="bca-cfg" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <div class="g2">
+        <div class="f"><label>Min advance</label><input type="number" id="bcaMin" value="5000" oninput="refreshAll()"/></div>
+        <div class="f"><label>Max advance</label><input type="number" id="bcaMax" value="150000" oninput="refreshAll()"/></div>
+      </div>
+      <div class="f"><label>Offer display mode</label>
+        <select id="bcaPresets" onchange="refreshAll()">
+          <option value="true">3 curated presets (apply_offer_presets: true)</option>
+          <option value="false">Full range (apply_offer_presets: false)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="c-flexi">
+    <div class="ch">
+      <div><span class="tag tg-api">FLEXI</span><div class="ct" style="margin-top:5px">Flexi Loan</div><div class="cd">Fixed-term loan with predictable repayment schedule.</div></div>
+      <label class="tw"><input type="checkbox" id="en_flexi" onchange="toggleCard('flexi',this.checked);refreshAll()"><span class="tg"></span></label>
+    </div>
+    <div id="flexi-cfg" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <div class="g2"><div class="f"><label>Min loan</label><input type="number" value="3000"/></div><div class="f"><label>Max loan</label><input type="number" value="100000"/></div></div>
+    </div>
+  </div>
+  <div class="card" id="c-renewal">
+    <div class="ch">
+      <div><span class="tag tg-api">RENEWAL</span><div class="ct" style="margin-top:5px">Renewals / Top-ups</div><div class="cd">Re-offer returning merchants automatically using stored <code>liberis_id</code>.</div></div>
+      <label class="tw"><input type="checkbox" id="en_renewal" checked onchange="toggleCard('renewal',this.checked);refreshAll()"><span class="tg"></span></label>
+    </div>
+    <div id="renewal-cfg" style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <div class="f"><label>Trigger renewal when</label>
+        <select id="renewalTrigger"><option value="75">75% repaid</option><option value="50">50% repaid</option><option value="closed">Deal closed</option></select>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="slabel">Eligibility rules (enforced before Liberis underwriting)</div>
+  <div class="g2">
+    <div class="f"><label>Min months on your platform</label><input type="number" id="minMonths" value="3" oninput="refreshAll()"/></div>
+    <div class="f"><label>Min average monthly revenue</label><input type="number" id="minRev" value="2000" oninput="refreshAll()"/></div>
+  </div>
+  <div class="brow"><button class="btn btn-s" onclick="goTo(1)">← Back</button><button class="btn btn-p" onclick="goTo(3)">Continue →</button></div>
+</div>
+
+<!-- ══ STEP 3: MCP SERVER SETUP ══ -->
+<div class="view" id="view-3">
+  <div class="vh">
+    <div class="ey">Step 03 / MCP Server Setup</div>
+    <div class="vt">Install, configure &amp; connect</div>
+    <div class="vd">The MCP server runs on <strong>your infrastructure</strong>, makes API calls at <strong>your cost</strong>, and holds <strong>your credentials</strong>. Nothing is shared with other partners. Choose your deployment target and follow the steps.</div>
+  </div>
+
+  <div class="pb">💡 <strong>What is the MCP server?</strong> It's a small Node.js process that exposes your Liberis integration as tools that any MCP-compatible AI client (Claude Desktop, Cursor, VS Code) can call in natural language. You run it; you own it; you pay Liberis API costs directly with your own credentials.</div>
+
+  <!-- Target selector -->
+  <div class="slabel">Deployment target</div>
+  <div class="mcp-target-tabs">
+    <div class="mcp-tab active" onclick="mcpTab('claude')" id="mt-claude">Claude Desktop</div>
+    <div class="mcp-tab" onclick="mcpTab('cursor')" id="mt-cursor">Cursor / VS Code</div>
+    <div class="mcp-tab" onclick="mcpTab('cloud')" id="mt-cloud">Cloud (Docker)</div>
+  </div>
+
+  <!-- CLAUDE DESKTOP -->
+  <div class="mcp-panel active" id="mp-claude">
+    <div class="slabel">Step 1 — Download the server file</div>
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:10px">Save <code>liberis_mcp_server.ts</code> from the bundle to a folder on your machine, e.g. <code>~/liberis-mcp/</code></p>
+
+    <div class="slabel">Step 2 — Install dependencies</div>
+    <div class="codeblock" id="cb-claude-install"><span class="cm"># In ~/liberis-mcp/</span>
+npm init -y
+npm install @modelcontextprotocol/sdk zod
+npm install -D ts-node typescript @types/node</div>
+    <button class="copy-btn" onclick="copyBlock('cb-claude-install')">Copy</button>
+
+    <div class="slabel" style="margin-top:14px">Step 3 — Create your .env file</div>
+    <div class="codeblock" id="cb-claude-env"><span id="env-block-claude"></span></div>
+    <button class="copy-btn" onclick="copyBlock('cb-claude-env')">Copy</button>
+
+    <div class="slabel" style="margin-top:14px">Step 4 — Add to Claude Desktop config</div>
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:8px">Open <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS) or <code>%APPDATA%\Claude\claude_desktop_config.json</code> (Windows) and add:</p>
+    <div class="codeblock" id="cb-claude-config"><span id="mcp-config-claude"></span></div>
+    <button class="copy-btn" onclick="copyBlock('cb-claude-config')">Copy</button>
+
+    <div class="slabel" style="margin-top:14px">Step 5 — Restart Claude Desktop</div>
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:8px">Quit and relaunch Claude Desktop. You should see a 🔧 hammer icon in the chat input indicating MCP tools are loaded. Type:</p>
+    <div class="codeblock"><span class="cs">"list the available Liberis tools"</span></div>
+    <p style="font-size:12.5px;color:var(--text2);margin-top:8px">Claude will call <code>list_tools</code> and describe all 9 available tools.</p>
+
+    <div class="slabel" style="margin-top:14px">Step 6 — Verify sandbox connection</div>
+    <div class="codeblock"><span class="cs">"Run the onboarding flow for merchant MERCH_TEST_001"</span></div>
+    <p style="font-size:12.5px;color:var(--text2);margin-top:8px">Claude calls <code>run_onboarding_flow</code>. You'll see step-by-step output showing register → revenue → eligibility → offers. The ADAPTER functions return mock data until you replace them.</p>
+  </div>
+
+  <!-- CURSOR -->
+  <div class="mcp-panel" id="mp-cursor">
+    <div class="slabel">Step 1 — Install and build</div>
+    <div class="codeblock" id="cb-cursor-install">cd ~/liberis-mcp
+npm install @modelcontextprotocol/sdk zod
+npm install -D ts-node typescript @types/node</div>
+    <button class="copy-btn" onclick="copyBlock('cb-cursor-install')">Copy</button>
+
+    <div class="slabel" style="margin-top:14px">Step 2 — Create your .env file</div>
+    <div class="codeblock" id="cb-cursor-env"><span id="env-block-cursor"></span></div>
+    <button class="copy-btn" onclick="copyBlock('cb-cursor-env')">Copy</button>
+
+    <div class="slabel" style="margin-top:14px">Step 3 — Add to Cursor MCP config</div>
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:8px">Open Cursor Settings → MCP → Add server, or edit <code>~/.cursor/mcp.json</code>:</p>
+    <div class="codeblock" id="cb-cursor-config"><span id="mcp-config-cursor"></span></div>
+    <button class="copy-btn" onclick="copyBlock('cb-cursor-config')">Copy</button>
+
+    <div class="slabel" style="margin-top:14px">Step 4 — Verify in Cursor agent</div>
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:8px">Open Cursor Composer in Agent mode and type:</p>
+    <div class="codeblock"><span class="cs">"List the Liberis tools available to you"</span></div>
+  </div>
+
+  <!-- CLOUD -->
+  <div class="mcp-panel" id="mp-cloud">
+    <div class="slabel">Step 1 — Create Dockerfile</div>
+    <div class="codeblock" id="cb-cloud-docker">FROM node:20-slim
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --production
+COPY liberis_mcp_server.ts .
+ENV MCP_TRANSPORT=sse
+EXPOSE 3000
+CMD ["npx", "ts-node", "liberis_mcp_server.ts"]</div>
+    <button class="copy-btn" onclick="copyBlock('cb-cloud-docker')">Copy</button>
+
+    <div class="slabel" style="margin-top:14px">Step 2 — Deploy to Railway</div>
+    <div class="codeblock" id="cb-cloud-railway"><span class="cm"># Install Railway CLI</span>
+npm install -g @railway/cli
+railway login
+railway init
+railway up
+
+<span class="cm"># Set environment variables in Railway dashboard:</span>
+<span id="env-block-cloud"></span></div>
+    <button class="copy-btn" onclick="copyBlock('cb-cloud-railway')">Copy</button>
+
+    <div class="slabel" style="margin-top:14px">Step 3 — Connect SSE client</div>
+    <p style="font-size:12.5px;color:var(--text2);margin-bottom:8px">Your MCP server will be at <code>https://your-app.railway.app/sse</code>. Add to any MCP client that supports HTTP/SSE transport. Health check at <code>/health</code>.</p>
+
+    <div class="ib" style="margin-top:12px">💡 Cloud deployment uses SSE transport instead of stdio. This lets multiple team members share one server instance, while credentials stay in Railway's secret store — never in version control.</div>
+  </div>
+
+  <!-- UNINSTALL -->
+  <div class="divider"></div>
+  <div class="acc" onclick="this.classList.toggle('open')">
+    <div class="ach"><span class="at">🗑 Uninstall / disconnect</span><span class="ac">▾</span></div>
+    <div class="acb">
+      <div class="slabel">Claude Desktop</div>
+      <p style="font-size:12.5px;color:var(--text2);margin-bottom:8px">Remove the <code>liberis</code> entry from <code>claude_desktop_config.json</code> and restart Claude Desktop. The server process will no longer start.</p>
+
+      <div class="slabel">Cursor</div>
+      <p style="font-size:12.5px;color:var(--text2);margin-bottom:8px">Remove the entry from <code>~/.cursor/mcp.json</code> or Cursor Settings → MCP → delete server.</p>
+
+      <div class="slabel">Cloud (Railway)</div>
+      <div class="codeblock">railway down  <span class="cm"># tears down the deployment</span></div>
+
+      <div class="wb" style="margin-top:8px">⚠ Uninstalling the MCP server does not affect your Liberis account, merchants, or active deals. It only disconnects the AI client from the integration tools.</div>
+    </div>
+  </div>
+
+  <div class="brow"><button class="btn btn-s" onclick="goTo(2)">← Back</button><button class="btn btn-p" onclick="goTo(4)">Continue →</button></div>
+</div>
+
+<!-- ══ STEP 4: ADAPTER MAPPING ══ -->
+<div class="view" id="view-4">
+  <div class="vh">
+    <div class="ey">Step 04 / Adapter Mapping</div>
+    <div class="vt">Connect your platform's APIs</div>
+    <div class="vd">The MCP server has five adapter functions that fetch data from your platform. Each one is a clearly labelled stub in the server file. Replace them one by one — you don't need to replace all of them before testing.</div>
+  </div>
+
+  <div class="pb">💡 <strong>How adapters work:</strong> When Claude calls a Liberis tool (e.g. <code>get_offers</code>), the MCP server calls <em>your</em> platform's API to fetch the merchant data it needs, then passes it to Liberis. The adapter functions are the bridge between your data and Liberis's expected format.</div>
+
+  <table class="adapter-table">
+    <thead><tr><th>Adapter function</th><th>What it fetches</th><th>Used by tools</th><th>Status</th></tr></thead>
+    <tbody id="adapter-table-body">
+      <tr>
+        <td><code>getPlatformMerchant</code></td>
+        <td>Merchant legal name, entity type, address, join date</td>
+        <td><code>register_merchant</code>, <code>get_offers</code>, <code>run_onboarding_flow</code></td>
+        <td><span class="tag tg-mock">MOCK</span></td>
+      </tr>
+      <tr>
+        <td><code>getPlatformRevenue</code></td>
+        <td>12 months of aggregated revenue (date, amount, count)</td>
+        <td><code>submit_revenue</code>, <code>get_offers</code>, <code>run_onboarding_flow</code></td>
+        <td><span class="tag tg-mock">MOCK</span></td>
+      </tr>
+      <tr>
+        <td><code>checkPlatformEligibility</code></td>
+        <td>Your platform's eligibility gate before Liberis underwriting</td>
+        <td><code>register_merchant</code>, <code>run_onboarding_flow</code></td>
+        <td><span class="tag tg-mock">MOCK</span></td>
+      </tr>
+      <tr>
+        <td><code>storeLiberisId</code></td>
+        <td>Write <code>liberis_id</code> to your database after first offer</td>
+        <td><code>get_offers</code>, <code>reprice_offer</code></td>
+        <td><span class="tag tg-mock">MOCK</span></td>
+      </tr>
+      <tr>
+        <td><code>getLiberisId</code></td>
+        <td>Read stored <code>liberis_id</code> for renewal detection</td>
+        <td><code>get_offers</code>, <code>reprice_offer</code></td>
+        <td><span class="tag tg-mock">MOCK</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="slabel">Replacing an adapter — example</div>
+  <div class="codeblock"><span class="cm">// BEFORE (mock stub in liberis_mcp_server.ts):</span>
+<span class="ck">async function</span> getPlatformMerchant(merchantId: string) {
+  console.error(<span class="cs">`[ADAPTER] getPlatformMerchant — replace with real call`</span>);
+  <span class="ck">return</span> { partnerId: merchantId, entityType: <span class="cs">'SoleTrader'</span>, ... };
+}
+
+<span class="cm">// AFTER (your real implementation):</span>
+<span class="ck">async function</span> getPlatformMerchant(merchantId: string) {
+  <span class="ck">const</span> res = <span class="ck">await</span> fetch(
+    <span class="cs">`https://api.yourplatform.com/v2/merchants/${merchantId}`</span>,
+    { headers: { Authorization: <span class="cs">`Bearer ${process.env.PLATFORM_API_KEY}`</span> } }
+  );
+  <span class="ck">const</span> m = <span class="ck">await</span> res.json();
+  <span class="ck">return</span> {
+    partnerId:       m.id,
+    entityType:      mapEntityType(m.businessType), <span class="cm">// map to Liberis taxonomy</span>
+    clientStartDate: m.joinedAt.slice(0, 10),
+    legalName:       m.registeredName,
+    address: { line1: m.address.street, town_city: m.address.city,
+               postcode: m.address.postcode, country: <span class="cs">'UK'</span> },
+    email:           m.contactEmail,
+    phone:           m.contactPhone,
+  };
+}</div>
+
+  <div class="slabel" style="margin-top:16px">Entity type mapping — Liberis taxonomy</div>
+  <div class="codeblock"><span class="cm">// Map your platform's entity types to Liberis values:</span>
+<span class="ck">function</span> mapEntityType(yourType: string): string {
+  <span class="ck">const</span> map: Record&lt;string, string&gt; = {
+    <span class="cs">'sole_trader'</span>:     <span class="cs">'SoleTrader'</span>,
+    <span class="cs">'limited_company'</span>: <span class="cs">'LimitedCompany'</span>,
+    <span class="cs">'llc'</span>:            <span class="cs">'LLC'</span>,
+    <span class="cs">'partnership'</span>:    <span class="cs">'Partnership'</span>,
+  };
+  <span class="ck">return</span> map[yourType] ?? <span class="cs">'SoleTrader'</span>;
+}</div>
+
+  <div class="divider"></div>
+  <div class="slabel">What to do with your OpenAPI schema</div>
+  <div class="sb">Upload your OpenAPI schema below and we'll identify which of your endpoints best match each adapter. This is a <strong>guide</strong> — review every match before using it in production.</div>
+
+  <div class="f"><label>Paste your OpenAPI JSON/YAML (optional)</label>
+    <textarea id="schemaInput" placeholder='{"openapi":"3.0.0","paths":{"/merchants/{id}":{"get":{"summary":"Get merchant"}}}}' style="min-height:90px;font-family:var(--fm);font-size:11px;" oninput="parseAdapterSchema()"></textarea>
+  </div>
+  <div id="schema-matches" style="display:none"></div>
+
+  <div class="brow"><button class="btn btn-s" onclick="goTo(3)">← Back</button><button class="btn btn-p" onclick="goTo(5)">Continue →</button></div>
+</div>
+
+<!-- ══ STEP 5: PLAYBOOK ══ -->
+<div class="view" id="view-5">
+  <div class="vh">
+    <div class="ey">Step 05 / Day 1–20 Runbook</div>
+    <div class="vt">Your integration playbook</div>
+    <div class="vd">A realistic timeline from first install to production-ready. The MCP server unlocks sandbox testing on Day 1 — production readiness takes longer because of regulatory and security gates, not technical complexity.</div>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="rb-phase">
+    <div class="rb-header">
+      <span class="rb-badge rb-day">Day 1</span>
+      <div class="rb-title">Install &amp; first sandbox call</div>
+    </div>
+    <div class="rb-items">
+      <div class="rb-item"><div class="ri-num">1.1</div><div class="ri-text"><b>Download the bundle</b> — clone the repo or download the zip. You need <code>liberis_mcp_server.ts</code> and the generated <code>.env</code> file from Step 3. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">1.2</div><div class="ri-text"><b>Get sandbox credentials</b> — contact your Liberis partner manager. They issue a <code>client_id</code> and <code>client_secret</code> scoped to the sandbox environment. <span class="rb-actor actor-liberis">LIBERIS</span></div></div>
+      <div class="rb-item"><div class="ri-num">1.3</div><div class="ri-text"><b>Fill in .env</b> — paste your sandbox <code>client_id</code> and <code>client_secret</code> into the generated <code>.env</code> file. Do not commit this file to version control. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">1.4</div><div class="ri-text"><b>Install and connect</b> — follow the install steps in Step 3 for your chosen client (Claude Desktop / Cursor / Cloud). <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">1.5</div><div class="ri-text"><b>First test call</b> — ask Claude: <code>"Run the onboarding flow for merchant MERCH_001"</code>. The MCP server authenticates, registers a test merchant, submits mock revenue, checks eligibility, and returns offers. The ADAPTER functions return mock data — this is expected. <span class="rb-actor actor-auto">MCP SERVER</span></div></div>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="rb-phase">
+    <div class="rb-header">
+      <span class="rb-badge rb-day">Days 2–5</span>
+      <div class="rb-title">Replace adapters with real platform calls</div>
+    </div>
+    <div class="rb-items">
+      <div class="rb-item"><div class="ri-num">2.1</div><div class="ri-text"><b>Start with <code>getPlatformMerchant</code></b> — the most impactful adapter. Replace the mock with a real call to your merchant API. Pay attention to the entity type mapping (Liberis taxonomy vs your taxonomy). <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">2.2</div><div class="ri-text"><b>Replace <code>getPlatformRevenue</code></b> — exclude the current partial month, use negative values for returns. Test with a merchant that has 12 months of actual data. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">2.3</div><div class="ri-text"><b>Implement <code>checkPlatformEligibility</code></b> — add your minimum months on platform check and minimum revenue threshold from Step 2 config. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">2.4</div><div class="ri-text"><b>Wire up <code>storeLiberisId</code> and <code>getLiberisId</code></b> — these need a database write and read. Add a <code>liberis_id</code> column to your merchants table. Without this, renewals will not work. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">2.5</div><div class="ri-text"><b>End-to-end sandbox test</b> — ask Claude: <code>"Register merchant [real_merchant_id] and show me what they qualify for"</code>. This now runs with your real platform data against the Liberis sandbox. <span class="rb-actor actor-auto">MCP SERVER</span></div></div>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="rb-phase">
+    <div class="rb-header">
+      <span class="rb-badge rb-day">Days 6–10</span>
+      <div class="rb-title">Validate sandbox behaviour &amp; type shapes</div>
+    </div>
+    <div class="rb-items">
+      <div class="rb-item"><div class="ri-num">3.1</div><div class="ri-text"><b>Compare response shapes</b> — check that the Liberis sandbox responses match the TypeScript types in the server file. The sandbox sometimes returns fields not in the documentation. Update types where needed. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">3.2</div><div class="ri-text"><b>Test offer acceptance</b> — ask Claude: <code>"Accept the lowest offer for merchant [id]"</code>. Check that <code>application_id</code> is returned and deal events arrive at your webhook endpoint. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">3.3</div><div class="ri-text"><b>Test renewal flow</b> — simulate a returning merchant by manually setting a <code>liberis_id</code> in your database, then run <code>get_offers</code> again. Confirm the renewal payload is sent (contains <code>liberis_id</code> in the request). <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">3.4</div><div class="ri-text"><b>Test edge cases</b> — ineligible merchant (expect <code>null</code> from <code>check_eligibility</code>), expired offer acceptance (expect HTTP 409), revenue validation failure. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="rb-phase">
+    <div class="rb-header">
+      <span class="rb-badge rb-day">Days 11–15</span>
+      <div class="rb-title">Security hardening before production</div>
+    </div>
+    <div class="rb-items">
+      <div class="rb-item"><div class="ri-num">4.1</div><div class="ri-text"><b>Add HMAC webhook verification</b> — the <code>handle_webhook</code> stub currently has no signature check. Add HMAC-SHA256 verification using your Liberis webhook secret before processing any event. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">4.2</div><div class="ri-text"><b>Move credentials to a secrets manager</b> — do not use <code>.env</code> files in production. Use AWS Secrets Manager, HashiCorp Vault, Railway Secrets, or equivalent. Rotate <code>client_id</code>/<code>client_secret</code> to production values. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">4.3</div><div class="ri-text"><b>Confirm data residency routing</b> — UK/EU merchants must use <code>platform.eu.liberis.com</code>. US merchants must use <code>platform.us.liberis.com</code>. The base URL must be determined by merchant domicile, not partner location. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">4.4</div><div class="ri-text"><b>Add structured logging</b> — log every Liberis API call (timestamp, operation, merchant_id hashed, response status, latency). Do NOT log request bodies — they contain PII. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+    </div>
+  </div>
+
+  <!-- PHASE 5 -->
+  <div class="rb-phase">
+    <div class="rb-header">
+      <span class="rb-badge rb-day">Days 16–20</span>
+      <div class="rb-title">Liberis partner approval &amp; production launch</div>
+    </div>
+    <div class="rb-items">
+      <div class="rb-item"><div class="ri-num">5.1</div><div class="ri-text"><b>Submit for Liberis partner review</b> — share your integration approach, UI copy (for mandated terminology check), and webhook endpoint with your Liberis partner manager. <span class="rb-actor actor-liberis">LIBERIS</span></div></div>
+      <div class="rb-item"><div class="ri-num">5.2</div><div class="ri-text"><b>UI copy compliance check</b> — Liberis has mandated terminology for how financing is described to merchants. Your partner manager will review and approve your copy. <span class="rb-actor actor-liberis">LIBERIS</span></div></div>
+      <div class="rb-item"><div class="ri-num">5.3</div><div class="ri-text"><b>Switch to production credentials</b> — update <code>LIBERIS_CLIENT_ID</code>, <code>LIBERIS_CLIENT_SECRET</code>, <code>LIBERIS_BASE_URL</code>, and <code>LIBERIS_ENV=production</code> in your secrets manager. Restart the MCP server. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+      <div class="rb-item"><div class="ri-num">5.4</div><div class="ri-text"><b>Soft launch with first merchant</b> — run <code>"Register [real_merchant_id] and show me their live offers"</code> in Claude. Confirm a real offer is returned with real underwriting. <span class="rb-actor actor-auto">MCP SERVER</span></div></div>
+      <div class="rb-item"><div class="ri-num">5.5</div><div class="ri-text"><b>Monitor first week</b> — watch webhook delivery, balance API response times, and revenue claim validation rates. Set up alerts for validation failures &gt; 5%. <span class="rb-actor actor-dev">DEVELOPER</span></div></div>
+    </div>
+  </div>
+
+  <div class="brow"><button class="btn btn-s" onclick="goTo(4)">← Back</button><button class="btn btn-p" onclick="goTo(6)">View Go-Live Checklist →</button></div>
+</div>
+
+<!-- ══ STEP 6: GO LIVE ══ -->
+<div class="view" id="view-6">
+  <div class="vh">
+    <div class="ey">Step 06 / Production Checklist</div>
+    <div class="vt">Ready to go live?</div>
+    <div class="vd">Work through each item. Ticked boxes are saved locally — your progress persists if you refresh.</div>
+  </div>
+
+  <div id="checklist-out"></div>
+
+  <div class="divider"></div>
+  <div class="slabel">Generated config summary</div>
+  <div id="config-summary-out"></div>
+
+  <div class="divider"></div>
+  <div class="slabel">Download everything</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" id="download-grid">
+    <div class="card" style="cursor:pointer;" onclick="dlFile('liberis_mcp_server.ts', 'see bundle')">
+      <div style="font-family:var(--fm);font-size:12px;color:var(--amber);margin-bottom:5px">📄 liberis_mcp_server.ts</div>
+      <div style="font-size:12px;color:var(--text2)">MCP server — deploy this to your infra</div>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="dlEnvFile()">
+      <div style="font-family:var(--fm);font-size:12px;color:var(--amber);margin-bottom:5px">📄 .env</div>
+      <div style="font-size:12px;color:var(--text2)">Pre-filled environment file for your config</div>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="dlMcpConfig()">
+      <div style="font-family:var(--fm);font-size:12px;color:var(--amber);margin-bottom:5px">📄 claude_desktop_config.json</div>
+      <div style="font-size:12px;color:var(--text2)">Drop into Claude Desktop config folder</div>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="dlConfigJson()">
+      <div style="font-family:var(--fm);font-size:12px;color:var(--amber);margin-bottom:5px">📄 liberis-config.json</div>
+      <div style="font-size:12px;color:var(--text2)">Full configuration as JSON</div>
+    </div>
+  </div>
+
+  <div class="brow">
+    <button class="btn btn-s" onclick="goTo(5)">← Back to Playbook</button>
+    <button class="btn btn-purple" onclick="dlAll()">↓ Download All Files</button>
+  </div>
+</div>
+
+</main>
+</div>
+<div class="sctop" id="sctop" onclick="document.getElementById('ms').scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+var cur = 1;
+var PROG = {1:14, 2:28, 3:44, 4:60, 5:76, 6:100};
+var REGION_URLS = {uk:'https://platform.eu.liberis.com', us:'https://platform.us.liberis.com', eu:'https://platform.eu.liberis.com'};
+
+// ─── NAVIGATION ──────────────────────────────────────────
+function goTo(n) {
+  document.getElementById('view-'+cur).classList.remove('active');
+  document.getElementById('nav-'+cur).classList.remove('active');
+  if (n > cur) {
+    document.getElementById('nav-'+cur).classList.add('done');
+    document.querySelector('#nav-'+cur+' .dot').textContent = '✓';
+  }
+  cur = n;
+  var v = document.getElementById('view-'+n);
+  v.classList.add('active','fu');
+  setTimeout(function(){ v.classList.remove('fu'); }, 400);
+  document.getElementById('nav-'+n).classList.add('active');
+  document.getElementById('pf').style.width = PROG[n]+'%';
+  document.getElementById('ms').scrollTo({top:0,behavior:'smooth'});
+  if (n === 3) refreshMcpConfigs();
+  if (n === 6) buildGoLive();
+}
+
+function updateBaseUrl() {
+  var r = document.getElementById('pRegion').value;
+  document.getElementById('pBaseUrl').value = REGION_URLS[r];
+}
+
+// ─── PRODUCT TOGGLE ───────────────────────────────────────
+function toggleCard(id, on) {
+  document.getElementById('c-'+id).classList.toggle('sel', on);
+  var cfg = document.getElementById(id+'-cfg');
+  if (cfg) cfg.style.display = on ? 'block' : 'none';
+}
+
+// ─── MCP TARGET TABS ─────────────────────────────────────
+function mcpTab(name) {
+  ['claude','cursor','cloud'].forEach(function(t) {
+    document.getElementById('mt-'+t).classList.toggle('active', t===name);
+    document.getElementById('mp-'+t).classList.toggle('active', t===name);
+  });
+  refreshMcpConfigs();
+}
+
+// ─── CONFIG GETTER ────────────────────────────────────────
+function getConfig() {
+  var r = document.getElementById('pRegion').value;
+  return {
+    platform: {
+      name:     document.getElementById('pName').value || 'MyPlatform',
+      type:     document.getElementById('pType').value,
+      region:   r,
+      baseUrl:  REGION_URLS[r],
+      env:      document.getElementById('pEnv').value,
+      currency: document.getElementById('pCur').value,
+      rev:      document.getElementById('pRev').value,
+    },
+    products: {
+      bca:      document.getElementById('en_bca').checked,
+      bcaMin:   document.getElementById('bcaMin').value,
+      bcaMax:   document.getElementById('bcaMax').value,
+      presets:  document.getElementById('bcaPresets').value === 'true',
+      flexi:    document.getElementById('en_flexi').checked,
+      renewal:  document.getElementById('en_renewal').checked,
+    },
+    rules: {
+      minMonths: document.getElementById('minMonths').value,
+      minRev:    document.getElementById('minRev').value,
+    },
+  };
+}
+
+function getProducts() {
+  var c = getConfig();
+  var p = [];
+  if (c.products.bca) p.push('bca');
+  if (c.products.flexi) p.push('flexi');
+  if (c.products.renewal) p.push('renewal');
+  return p.join(',') || 'bca';
+}
+
+// ─── ENV FILE CONTENT ─────────────────────────────────────
+function envContent() {
+  var c = getConfig();
+  return [
+    '# Liberis API credentials (get from your partner manager)',
+    'LIBERIS_CLIENT_ID=your_client_id_here',
+    'LIBERIS_CLIENT_SECRET=your_client_secret_here',
+    '',
+    '# API configuration',
+    'LIBERIS_BASE_URL='+c.platform.baseUrl,
+    'LIBERIS_ENV='+c.platform.env,
+    '',
+    '# Your platform settings',
+    'PARTNER_NAME='+c.platform.name,
+    'PARTNER_CURRENCY='+c.platform.currency,
+    '',
+    '# Products and policy',
+    'PRODUCTS_ENABLED='+getProducts(),
+    'MIN_MONTHS='+c.rules.minMonths,
+    'MIN_REVENUE='+c.rules.minRev,
+    'APPLY_OFFER_PRESETS='+(c.products.presets ? 'true' : 'false'),
+    '',
+    '# Transport: stdio (Claude Desktop/Cursor) or sse (cloud/HTTP)',
+    'MCP_TRANSPORT=stdio',
+    'MCP_PORT=3000',
+  ].join('\n');
+}
+
+// ─── MCP CLIENT CONFIGS ───────────────────────────────────
+function refreshMcpConfigs() {
+  var c = getConfig();
+  var env = envContent();
+
+  // env blocks
+  ['claude','cursor','cloud'].forEach(function(t) {
+    var el = document.getElementById('env-block-'+t);
+    if (el) el.textContent = env;
+  });
+
+  // Claude Desktop config
+  var claudeConfig = JSON.stringify({
+    mcpServers: {
+      liberis: {
+        command: 'npx',
+        args: ['ts-node', '/Users/you/liberis-mcp/liberis_mcp_server.ts'],
+        env: {
+          LIBERIS_CLIENT_ID: 'your_client_id_here',
+          LIBERIS_CLIENT_SECRET: 'your_client_secret_here',
+          LIBERIS_BASE_URL: c.platform.baseUrl,
+          LIBERIS_ENV: c.platform.env,
+          PARTNER_NAME: c.platform.name,
+          PARTNER_CURRENCY: c.platform.currency,
+          PRODUCTS_ENABLED: getProducts(),
+          MIN_MONTHS: c.rules.minMonths,
+          MIN_REVENUE: c.rules.minRev,
+          APPLY_OFFER_PRESETS: String(c.products.presets),
+          MCP_TRANSPORT: 'stdio',
+        }
+      }
+    }
+  }, null, 2);
+  var el1 = document.getElementById('mcp-config-claude');
+  if (el1) el1.textContent = claudeConfig;
+
+  // Cursor config
+  var cursorConfig = JSON.stringify({
+    mcpServers: {
+      liberis: {
+        command: 'npx',
+        args: ['ts-node', '/Users/you/liberis-mcp/liberis_mcp_server.ts'],
+        env: {
+          LIBERIS_CLIENT_ID: 'your_client_id_here',
+          LIBERIS_CLIENT_SECRET: 'your_client_secret_here',
+          LIBERIS_BASE_URL: c.platform.baseUrl,
+          LIBERIS_ENV: c.platform.env,
+          PARTNER_NAME: c.platform.name,
+          PARTNER_CURRENCY: c.platform.currency,
+          PRODUCTS_ENABLED: getProducts(),
+          MCP_TRANSPORT: 'stdio',
+        }
+      }
+    }
+  }, null, 2);
+  var el2 = document.getElementById('mcp-config-cursor');
+  if (el2) el2.textContent = cursorConfig;
+
+  var envCloud = document.getElementById('env-block-cloud');
+  if (envCloud) envCloud.textContent = env.replace('MCP_TRANSPORT=stdio','MCP_TRANSPORT=sse');
+}
+
+function refreshAll() { refreshMcpConfigs(); }
+
+// ─── SCHEMA ADAPTER MATCHING ──────────────────────────────
+var ADAPTER_HINTS = {
+  getPlatformMerchant:    ['merchant','seller','account','business','vendor'],
+  getPlatformRevenue:     ['revenue','transaction','sales','volume','settlement','payment'],
+  checkPlatformEligibility: ['eligible','qualify','check','status'],
+  storeLiberisId:         ['update','patch','put','merchant','account'],
+  getLiberisId:           ['merchant','seller','account','get'],
+};
+
+function parseAdapterSchema() {
+  var txt = document.getElementById('schemaInput').value.trim();
+  if (!txt || txt.length < 20) { document.getElementById('schema-matches').style.display='none'; return; }
+  try {
+    var schema = JSON.parse(txt);
+    var endpoints = [];
+    if (schema.paths) {
+      ['get','post','put','patch'].forEach(function(method) {
+        Object.keys(schema.paths).forEach(function(path) {
+          var op = schema.paths[path][method];
+          if (op) endpoints.push({ method: method.toUpperCase(), path: path, summary: op.summary || op.operationId || path });
+        });
+      });
+    }
+    if (!endpoints.length) return;
+
+    var rows = Object.keys(ADAPTER_HINTS).map(function(adapter) {
+      var hints = ADAPTER_HINTS[adapter];
+      var scored = endpoints.map(function(ep) {
+        var score = hints.filter(function(h) {
+          return ep.path.toLowerCase().includes(h) || ep.summary.toLowerCase().includes(h);
+        }).length;
+        return { ep: ep, score: score };
+      }).sort(function(a,b){ return b.score - a.score; });
+      var best = scored[0];
+      return '<tr><td><code>'+adapter+'</code></td>' +
+        '<td><span class="tag '+(best.score>0?'tg-ok':'tg-mock')+'">'+(best.score>0?'✓ match':'no match')+'</span></td>' +
+        '<td style="font-family:var(--fm);font-size:11px;color:'+(best.score>0?'var(--teal)':'var(--text3)')+'">'+(best.score>0?best.ep.method+' '+best.ep.path:'—')+'</td>' +
+        '<td style="font-size:11px;color:var(--text3)">confidence: '+(best.score>1?'high':best.score===1?'medium':'low')+'</td></tr>';
+    }).join('');
+
+    document.getElementById('schema-matches').style.display = 'block';
+    document.getElementById('schema-matches').innerHTML =
+      '<div class="slabel" style="margin-top:8px">Adapter match suggestions — review before using</div>' +
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">' +
+      '<table class="adapter-table"><thead><tr><th>Adapter</th><th>Match</th><th>Suggested endpoint</th><th>Confidence</th></tr></thead>' +
+      '<tbody>'+rows+'</tbody></table></div>' +
+      '<p style="font-size:12px;color:var(--text3);margin-top:8px">These are suggestions only. Review each match against your actual API documentation before implementing.</p>';
+  } catch(e) {
+    document.getElementById('schema-matches').style.display = 'block';
+    document.getElementById('schema-matches').innerHTML = '<div class="wb">Could not parse schema: '+e.message+'</div>';
+  }
+}
+
+// ─── CHECKLIST ────────────────────────────────────────────
+var CHECKLIST = [
+  { id:'cl1',  cat:'Server',     text:'MCP server deploys and starts without errors' },
+  { id:'cl2',  cat:'Server',     text:'All five adapter functions replaced with real platform calls' },
+  { id:'cl3',  cat:'Server',     text:'liberis_id stored and retrieved correctly (renewal flow tested)' },
+  { id:'cl4',  cat:'Security',   text:'Credentials stored in secrets manager, not .env file' },
+  { id:'cl5',  cat:'Security',   text:'HMAC-SHA256 webhook signature verification implemented' },
+  { id:'cl6',  cat:'Security',   text:'PII fields (DOB, bank details) excluded from all logs' },
+  { id:'cl7',  cat:'Data',       text:'Data residency routing confirmed (UK/EU vs US base URL)' },
+  { id:'cl8',  cat:'Data',       text:'DPA with Liberis in place covering sub-processor relationship' },
+  { id:'cl9',  cat:'Testing',    text:'End-to-end sandbox test passed with real merchant data' },
+  { id:'cl10', cat:'Testing',    text:'Offer acceptance tested, deal.activated webhook received' },
+  { id:'cl11', cat:'Testing',    text:'Renewal flow tested (returning merchant with stored liberis_id)' },
+  { id:'cl12', cat:'Compliance', text:'Liberis mandated terminology review completed' },
+  { id:'cl13', cat:'Compliance', text:'Production credentials issued by Liberis partner manager' },
+  { id:'cl14', cat:'Ops',        text:'Structured logging in place (no request/response bodies)' },
+  { id:'cl15', cat:'Ops',        text:'Alert configured for revenue validation failure rate > 5%' },
+];
+
+function buildGoLive() {
+  var cats = {};
+  CHECKLIST.forEach(function(item) {
+    if (!cats[item.cat]) cats[item.cat] = [];
+    cats[item.cat].push(item);
+  });
+  var html = '';
+  Object.keys(cats).forEach(function(cat) {
+    html += '<div style="margin-bottom:20px"><div class="slabel">'+cat+'</div>';
+    cats[cat].forEach(function(item) {
+      var checked = localStorage.getItem('cl_'+item.id) === '1';
+      html += '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;cursor:pointer;font-size:12.5px;color:var(--text2);">' +
+        '<input type="checkbox" '+(checked?'checked':'')+' onchange="saveCl(\''+item.id+'\',this.checked)" style="display:none"/>' +
+        '<span style="width:16px;height:16px;border-radius:3px;border:1.5px solid var(--border2);background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:var(--teal);">'+(checked?'✓':'')+'</span>' +
+        '<span>'+(checked?'<s style="opacity:.5">'+item.text+'</s>':item.text)+'</span>' +
+        '</label>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('checklist-out').innerHTML = html;
+
+  var c = getConfig();
+  var cur2 = c.platform.currency;
+  document.getElementById('config-summary-out').innerHTML =
+    '<div class="codeblock">Platform : '+c.platform.name+' ('+c.platform.type+')\n' +
+    'Region   : '+c.platform.region.toUpperCase()+' → '+c.platform.baseUrl+'\n' +
+    'Env      : '+c.platform.env+'\n' +
+    'Currency : '+c.platform.currency+'\n' +
+    'Products : '+getProducts()+'\n' +
+    'BCA range: '+cur2+(c.products.bcaMin||5000).toLocaleString()+' – '+cur2+(c.products.bcaMax||150000).toLocaleString()+'\n' +
+    'Presets  : '+c.products.presets+'\n' +
+    'Min months on platform: '+c.rules.minMonths+'\n' +
+    'Min monthly revenue: '+cur2+(c.rules.minRev||2000).toLocaleString()+'\n' +
+    'MCP server tools: register_merchant, submit_revenue, check_eligibility,\n' +
+    '                  get_offers, reprice_offer, accept_offer, get_balance,\n' +
+    '                  run_onboarding_flow, list_tools</div>';
+}
+
+function saveCl(id, val) {
+  localStorage.setItem('cl_'+id, val?'1':'0');
+  buildGoLive(); // refresh to show strikethrough
+}
+
+// ─── COPY ─────────────────────────────────────────────────
+function copyBlock(id) {
+  var el = document.getElementById(id);
+  var txt = el.innerText || el.textContent;
+  navigator.clipboard.writeText(txt).then(function() {
+    var btns = el.parentElement.querySelectorAll('.copy-btn');
+    if (btns.length) { btns[0].textContent='Copied!'; setTimeout(function(){btns[0].textContent='Copy';},1500); }
+  });
+}
+
+// ─── DOWNLOADS ────────────────────────────────────────────
+function dlFile(name, content) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type:'text/plain'}));
+  a.download = name; a.click();
+}
+function dlEnvFile() { dlFile('.env', envContent()); }
+function dlMcpConfig() {
+  var c = getConfig();
+  var cfg = JSON.stringify({
+    mcpServers: {
+      liberis: {
+        command: 'npx',
+        args: ['ts-node', '/path/to/liberis_mcp_server.ts'],
+        env: {
+          LIBERIS_CLIENT_ID: 'your_client_id_here',
+          LIBERIS_CLIENT_SECRET: 'your_client_secret_here',
+          LIBERIS_BASE_URL: c.platform.baseUrl,
+          LIBERIS_ENV: c.platform.env,
+          PARTNER_NAME: c.platform.name,
+          PARTNER_CURRENCY: c.platform.currency,
+          PRODUCTS_ENABLED: getProducts(),
+          MIN_MONTHS: c.rules.minMonths,
+          MIN_REVENUE: c.rules.minRev,
+          APPLY_OFFER_PRESETS: String(c.products.presets),
+          MCP_TRANSPORT: 'stdio',
+        }
+      }
+    }
+  }, null, 2);
+  dlFile('claude_desktop_config.json', cfg);
+}
+function dlConfigJson() {
+  var blob = new Blob([JSON.stringify(getConfig(), null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'liberis-config-'+(getConfig().platform.name||'platform').toLowerCase().replace(/\s+/g,'-')+'.json';
+  a.click();
+}
+function dlAll() {
+  dlEnvFile();
+  setTimeout(function(){ dlMcpConfig(); }, 200);
+  setTimeout(function(){ dlConfigJson(); }, 400);
+}
+
+// ─── ACCORDION ────────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  var ach = e.target.closest('.ach');
+  if (ach) ach.parentElement.classList.toggle('open');
+});
+
+// ─── SCROLL TOP ───────────────────────────────────────────
+document.getElementById('ms').addEventListener('scroll', function() {
+  document.getElementById('sctop').classList.toggle('vis', this.scrollTop > 300);
+});
+
+// Init
+refreshMcpConfigs();
+</script>
+</body>
+</html>
